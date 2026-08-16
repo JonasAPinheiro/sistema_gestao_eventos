@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -23,7 +22,6 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<Map<String, Object>> construirResposta(HttpStatus status, String mensagem) {
         Map<String, Object> corpo = Map.of(
-                "timestamp", LocalDateTime.now(),
                 "status", status.value(),
                 "erro", status.getReasonPhrase(),
                 "mensagem", mensagem
