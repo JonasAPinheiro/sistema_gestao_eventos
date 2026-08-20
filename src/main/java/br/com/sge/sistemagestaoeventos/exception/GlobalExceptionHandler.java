@@ -23,6 +23,11 @@ public class GlobalExceptionHandler {
         return construirResposta(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
     }
 
+    @ExceptionHandler(InscricaoNaoEncontradaException.class)
+    public ResponseEntity<Map<String, Object>> tratarInscricaoNaoEncontrada(InscricaoNaoEncontradaException ex, HttpServletRequest request) {
+        return construirResposta(HttpStatus.NOT_FOUND, ex.getMessage(), request.getRequestURI());
+    }
+
     @ExceptionHandler(RegraNegocioException.class)
     public ResponseEntity<Map<String, Object>> tratarRegraNegocio(RegraNegocioException ex, HttpServletRequest request) {
         return construirResposta(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());

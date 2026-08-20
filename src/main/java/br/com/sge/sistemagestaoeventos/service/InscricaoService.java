@@ -1,7 +1,6 @@
 package br.com.sge.sistemagestaoeventos.service;
 
 import br.com.sge.sistemagestaoeventos.enums.StatusEvento;
-import br.com.sge.sistemagestaoeventos.exception.ConflitoException;
 import br.com.sge.sistemagestaoeventos.exception.InscricaoNaoEncontradaException;
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
@@ -40,7 +39,7 @@ public class InscricaoService {
 
         inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante(eventoId, participanteId)
                 .ifPresent(i -> {
-                    throw new ConflitoException("O participante já possui uma inscrição ativa neste evento.");
+                    throw new RegraNegocioException("O participante já possui uma inscrição ativa neste evento.");
                 });
 
         if (inscricaoRepository.contarConfirmadasPorEvento(eventoId) >= evento.getCapacidadeMaxima()) {
