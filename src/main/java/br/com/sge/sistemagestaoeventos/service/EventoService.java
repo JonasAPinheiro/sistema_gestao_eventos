@@ -38,18 +38,18 @@ public class EventoService {
         eventoExistente.setTitulo(dadosAtualizados.getTitulo());
         eventoExistente.setDescricao(dadosAtualizados.getDescricao());
         eventoExistente.setData(dadosAtualizados.getData());
-        eventoExistente.setHorarioInicio(dadosAtualizados.getHorarioInicio());
-        eventoExistente.setHorarioTermino(dadosAtualizados.getHorarioTermino());
+        eventoExistente.setHoraInicio(dadosAtualizados.getHoraInicio());
+        eventoExistente.setHoraFim(dadosAtualizados.getHoraFim());
         eventoExistente.setLocal(dadosAtualizados.getLocal());
         eventoExistente.setCapacidadeMaxima(dadosAtualizados.getCapacidadeMaxima());
 
         return eventoRepository.salvar(eventoExistente);
     }
 
-    public void cancelar(String id) {
+    public Evento cancelar(String id) {
         Evento evento = buscarPorId(id);
         evento.cancelar();
-        eventoRepository.salvar(evento);
+        return eventoRepository.salvar(evento);
     }
 
     private void validarDadosDoEvento(Evento evento) {
@@ -65,8 +65,8 @@ public class EventoService {
             throw new RegraNegocioException("A data do evento não pode ser anterior à data atual.");
         }
 
-        if (evento.getHorarioInicio() == null || evento.getHorarioTermino() == null
-                || !evento.getHorarioTermino().isAfter(evento.getHorarioInicio())) {
+        if (evento.getHoraInicio() == null || evento.getHoraFim() == null
+                || !evento.getHoraFim().isAfter(evento.getHoraInicio())) {
             throw new RegraNegocioException("O horário de término deve ser posterior ao horário de início.");
         }
 

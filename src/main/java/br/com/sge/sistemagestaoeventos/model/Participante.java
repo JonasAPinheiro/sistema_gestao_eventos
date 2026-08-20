@@ -13,12 +13,12 @@ public class Participante {
     private String nome;
     @Setter
     private String email;
-    private final LocalDateTime dataCriacao;
+    private final LocalDateTime criadoEm;
 
     public Participante(String nome, String email) {
         this.id = UUID.randomUUID().toString();
         this.nome = nome;
         this.email = email;
-        this.dataCriacao = LocalDateTime.now();
+        this.criadoEm = LocalDateTime.now();
     }
 }
