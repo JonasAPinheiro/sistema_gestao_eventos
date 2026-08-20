@@ -12,12 +12,12 @@ public record EventoResponseDTO(
         String titulo,
         String descricao,
         LocalDate data,
-        LocalTime horarioInicio,
-        LocalTime horarioTermino,
+        LocalTime horaInicio,
+        LocalTime horaFim,
         String local,
         int capacidadeMaxima,
         StatusEvento status,
-        LocalDateTime dataCriacao
+        LocalDateTime criadoEm
 ) {
     public static EventoResponseDTO from(Evento evento) {
         return new EventoResponseDTO(
@@ -25,12 +25,12 @@ public record EventoResponseDTO(
                 evento.getTitulo(),
                 evento.getDescricao(),
                 evento.getData(),
-                evento.getHorarioInicio(),
-                evento.getHorarioTermino(),
+                evento.getHoraInicio(),
+                evento.getHoraFim(),
                 evento.getLocal(),
                 evento.getCapacidadeMaxima(),
                 evento.getStatus(),
-                evento.getDataCriacao()
+                evento.getCriadoEm()
         );
     }
 }

@@ -36,8 +36,8 @@ public class EventoController {
                 dto.titulo(),
                 dto.descricao(),
                 dto.data(),
-                dto.horarioInicio(),
-                dto.horarioTermino(),
+                dto.horaInicio(),
+                dto.horaFim(),
                 dto.local(),
                 dto.capacidadeMaxima()
         );
@@ -50,8 +50,8 @@ public class EventoController {
                 dto.titulo(),
                 dto.descricao(),
                 dto.data(),
-                dto.horarioInicio(),
-                dto.horarioTermino(),
+                dto.horaInicio(),
+                dto.horaFim(),
                 dto.local(),
                 dto.capacidadeMaxima()
         );

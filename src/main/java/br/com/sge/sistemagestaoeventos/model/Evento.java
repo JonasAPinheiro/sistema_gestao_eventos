@@ -19,27 +19,27 @@ public class Evento {
     @Setter
     private LocalDate data;
     @Setter
-    private LocalTime horarioInicio;
+    private LocalTime horaInicio;
     @Setter
-    private LocalTime horarioTermino;
+    private LocalTime horaFim;
     @Setter
     private String local;
     @Setter
     private int capacidadeMaxima;
     private StatusEvento status;
-    private final LocalDateTime dataCriacao;
+    private final LocalDateTime criadoEm;
 
-    public Evento(String titulo, String descricao, LocalDate data, LocalTime horarioInicio, LocalTime horarioTermino, String local, int capacidadeMaxima) {
+    public Evento(String titulo, String descricao, LocalDate data, LocalTime horaInicio, LocalTime horaFim, String local, int capacidadeMaxima) {
         this.id = UUID.randomUUID().toString();
         this.titulo = titulo;
         this.descricao = descricao;
         this.data = data;
-        this.horarioInicio = horarioInicio;
-        this.horarioTermino = horarioTermino;
+        this.horaInicio = horaInicio;
+        this.horaFim = horaFim;
         this.local = local;
         this.capacidadeMaxima = capacidadeMaxima;
         this.status = StatusEvento.ATIVO;
-        this.dataCriacao = LocalDateTime.now();
+        this.criadoEm = LocalDateTime.now();
     }
 
     public void cancelar() {

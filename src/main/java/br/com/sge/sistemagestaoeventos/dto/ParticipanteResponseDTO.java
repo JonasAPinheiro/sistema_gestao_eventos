@@ -15,7 +15,7 @@ public record ParticipanteResponseDTO(
                 participante.getId(),
                 participante.getNome(),
                 participante.getEmail(),
-                participante.getDataCriacao()
+                participante.getCriadoEm()
         );
     }
 }

@@ -7,8 +7,8 @@ public record EventoRequestDTO(
         String titulo,
         String descricao,
         LocalDate data,
-        LocalTime horarioInicio,
-        LocalTime horarioTermino,
+        LocalTime horaInicio,
+        LocalTime horaFim,
         String local,
         int capacidadeMaxima
 ) {}
