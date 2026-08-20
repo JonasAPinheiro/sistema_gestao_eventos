@@ -58,9 +58,8 @@ public class EventoController {
         return EventoResponseDTO.from(eventoService.atualizar(id, dadosAtualizados));
     }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancelar(@PathVariable String id) {
-        eventoService.cancelar(id);
+    @PatchMapping("/{id}/cancelamento")
+    public EventoResponseDTO cancelar(@PathVariable String id) {
+        return EventoResponseDTO.from(eventoService.cancelar(id));
     }
 }

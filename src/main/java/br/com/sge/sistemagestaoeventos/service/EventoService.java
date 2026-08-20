@@ -46,10 +46,10 @@ public class EventoService {
         return eventoRepository.salvar(eventoExistente);
     }
 
-    public void cancelar(String id) {
+    public Evento cancelar(String id) {
         Evento evento = buscarPorId(id);
         evento.cancelar();
-        eventoRepository.salvar(evento);
+        return eventoRepository.salvar(evento);
     }
 
     private void validarDadosDoEvento(Evento evento) {
