@@ -4,6 +4,7 @@ import br.com.sge.sistemagestaoeventos.enums.StatusEvento;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -39,7 +40,7 @@ public class Evento {
         this.local = local;
         this.capacidadeMaxima = capacidadeMaxima;
         this.status = StatusEvento.ATIVO;
-        this.criadoEm = LocalDateTime.now();
+        this.criadoEm = LocalDateTime.now(Clock.systemDefaultZone());
     }
 
     public void cancelar() {
