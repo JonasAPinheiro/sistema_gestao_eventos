@@ -31,14 +31,14 @@ public class ParticipanteService {
 
     public Participante cadastrar(Participante participante) {
         validarDadosDoParticipante(participante);
-        validarEmailUnico(participante.getEmail(), null);
+        validarEmailDisponivelParaCadastro(participante.getEmail());
         return participanteRepository.salvar(participante);
     }
 
     public Participante atualizar(String id, Participante dadosAtualizados) {
         Participante participanteExistente = buscarPorId(id);
         validarDadosDoParticipante(dadosAtualizados);
-        validarEmailUnico(dadosAtualizados.getEmail(), id);
+        validarEmailDisponivelParaAtualizacao(dadosAtualizados.getEmail(), id);
 
         participanteExistente.setNome(dadosAtualizados.getNome());
         participanteExistente.setEmail(dadosAtualizados.getEmail());
@@ -47,24 +47,41 @@ public class ParticipanteService {
     }
 
     private void validarDadosDoParticipante(Participante participante) {
-        if (participante.getNome() == null || participante.getNome().isBlank()) {
+        validarNome(participante.getNome());
+        validarEmail(participante.getEmail());
+    }
+
+    private void validarNome(String nome) {
+        if (nome == null || nome.isBlank()) {
             throw new RegraNegocioException("O nome do participante é obrigatório.");
         }
+    }
 
-        if (participante.getEmail() == null || participante.getEmail().isBlank()) {
+    private void validarEmail(String email) {
+        if (email == null || email.isBlank()) {
             throw new RegraNegocioException("O e-mail do participante é obrigatório.");
         }
 
-        if (!EMAIL_PATTERN.matcher(participante.getEmail()).matches()) {
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
             throw new RegraNegocioException("O e-mail do participante deve possuir um formato válido.");
         }
     }
 
-    private void validarEmailUnico(String email, String idAtual) {
-        participanteRepository.buscarPorEmail(email).ifPresent(existente -> {
-            if (idAtual == null || !existente.getId().equals(idAtual)) {
-                throw new RegraNegocioException("Já existe um participante cadastrado com este e-mail.");
-            }
-        });
+    private void validarEmailDisponivelParaCadastro(String email) {
+        boolean emailJaCadastrado = participanteRepository.buscarPorEmail(email).isPresent();
+
+        if (emailJaCadastrado) {
+            throw new RegraNegocioException("Já existe um participante cadastrado com este e-mail.");
+        }
+    }
+
+    private void validarEmailDisponivelParaAtualizacao(String email, String idAtual) {
+        boolean emailPertenceAOutroParticipante = participanteRepository.buscarPorEmail(email)
+                .filter(existente -> !existente.getId().equals(idAtual))
+                .isPresent();
+
+        if (emailPertenceAOutroParticipante) {
+            throw new RegraNegocioException("Já existe um participante cadastrado com este e-mail.");
+        }
     }
 }
