@@ -11,42 +11,42 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 public class InscricaoRepositoryMemoria implements InscricaoRepository {
-    private final Map<String, Inscricao> dados = new ConcurrentHashMap<>();
+    private final Map<String, Inscricao> inscricoesPorId = new ConcurrentHashMap<>();
 
     @Override
     public Inscricao salvar(Inscricao inscricao) {
-        dados.put(inscricao.getId(), inscricao);
+        inscricoesPorId.put(inscricao.getId(), inscricao);
         return inscricao;
     }
 
     @Override
     public Optional<Inscricao> buscarInscricaoAtivaPorEventoEParticipante(String eventoId, String participanteId) {
-        return dados.values().stream()
-                .filter(i -> i.getEventoId().equals(eventoId))
-                .filter(i -> i.getParticipanteId().equals(participanteId))
-                .filter(i -> i.getStatus() == StatusInscricao.CONFIRMADA)
+        return inscricoesPorId.values().stream()
+                .filter(inscricao -> inscricao.getEventoId().equals(eventoId))
+                .filter(inscricao -> inscricao.getParticipanteId().equals(participanteId))
+                .filter(inscricao -> inscricao.getStatus() == StatusInscricao.CONFIRMADA)
                 .findFirst();
     }
 
     @Override
     public List<Inscricao> listarPorEvento(String eventoId) {
-        return dados.values().stream()
-                .filter(i -> i.getEventoId().equals(eventoId))
+        return inscricoesPorId.values().stream()
+                .filter(inscricao -> inscricao.getEventoId().equals(eventoId))
                 .toList();
     }
 
     @Override
     public List<Inscricao> listarPorParticipante(String participanteId) {
-        return dados.values().stream()
-                .filter(i -> i.getParticipanteId().equals(participanteId))
+        return inscricoesPorId.values().stream()
+                .filter(inscricao -> inscricao.getParticipanteId().equals(participanteId))
                 .toList();
     }
 
     @Override
     public long contarConfirmadasPorEvento(String eventoId) {
-        return dados.values().stream()
-                .filter(i -> i.getEventoId().equals(eventoId))
-                .filter(i -> i.getStatus() == StatusInscricao.CONFIRMADA)
+        return inscricoesPorId.values().stream()
+                .filter(inscricao -> inscricao.getEventoId().equals(eventoId))
+                .filter(inscricao -> inscricao.getStatus() == StatusInscricao.CONFIRMADA)
                 .count();
     }
 }

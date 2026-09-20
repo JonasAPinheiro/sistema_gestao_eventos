@@ -8,6 +8,7 @@ import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.repository.InscricaoRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class InscricaoService {
         }
 
         LocalDateTime inicioEvento = LocalDateTime.of(evento.getData(), evento.getHoraInicio());
-        if (!inicioEvento.isAfter(LocalDateTime.now())) {
+        if (!inicioEvento.isAfter(LocalDateTime.now(Clock.systemDefaultZone()))) {
             throw new RegraNegocioException("Não é possível realizar inscrição após o início do evento.");
         }
 
