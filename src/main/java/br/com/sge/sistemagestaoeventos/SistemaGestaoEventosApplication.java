@@ -7,7 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SistemaGestaoEventosApplication {
 
     public static void main(String[] args) {
-        System.out.println("Projeto Criado");
         SpringApplication.run(SistemaGestaoEventosApplication.class, args);
     }
 }
