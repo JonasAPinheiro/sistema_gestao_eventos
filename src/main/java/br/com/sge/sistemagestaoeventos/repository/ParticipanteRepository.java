@@ -7,8 +7,10 @@ import java.util.Optional;
 
 public interface ParticipanteRepository {
     Participante salvar(Participante participante);
+
     Optional<Participante> buscarPorId(String id);
+
     Optional<Participante> buscarPorEmail(String email);
+
     List<Participante> listarTodos();
-    boolean existePorId(String id);
 }

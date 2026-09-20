@@ -10,17 +10,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 public class ParticipanteRepositoryMemoria implements ParticipanteRepository {
-    private final Map<String, Participante> dados = new ConcurrentHashMap<>();
+    private final Map<String, Participante> participantes = new ConcurrentHashMap<>();
 
     @Override
     public Participante salvar(Participante participante) {
-        dados.put(participante.getId(), participante);
+        participantes.put(participante.getId(), participante);
         return participante;
     }
 
     @Override
     public Optional<Participante> buscarPorId(String id) {
-        return Optional.ofNullable(dados.get(id));
+        return Optional.ofNullable(participantes.get(id));
     }
 
     @Override
@@ -28,18 +28,14 @@ public class ParticipanteRepositoryMemoria implements ParticipanteRepository {
         if (email == null) {
             return Optional.empty();
         }
-        return dados.values().stream()
-                .filter(p -> email.equalsIgnoreCase(p.getEmail()))
+
+        return participantes.values().stream()
+                .filter(participante -> email.equalsIgnoreCase(participante.getEmail()))
                 .findFirst();
     }
 
     @Override
     public List<Participante> listarTodos() {
-        return List.copyOf(dados.values());
-    }
-
-    @Override
-    public boolean existePorId(String id) {
-        return dados.containsKey(id);
+        return List.copyOf(participantes.values());
     }
 }
