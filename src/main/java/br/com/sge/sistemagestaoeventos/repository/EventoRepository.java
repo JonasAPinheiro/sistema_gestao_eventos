@@ -9,5 +9,4 @@ public interface EventoRepository {
     Evento salvar (Evento evento);
     Optional<Evento> buscarPorId(String id);
     List<Evento> listarTodos();
-    boolean existePorId(String id);
 }

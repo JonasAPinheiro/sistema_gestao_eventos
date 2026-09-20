@@ -6,6 +6,7 @@ import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.repository.EventoRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -61,7 +62,7 @@ public class EventoService {
             throw new RegraNegocioException("A descrição do evento é obrigatória.");
         }
 
-        if (evento.getData() == null || evento.getData().isBefore(LocalDate.now())) {
+        if (evento.getData() == null || evento.getData().isBefore(LocalDate.now(Clock.systemDefaultZone()))) {
             throw new RegraNegocioException("A data do evento não pode ser anterior à data atual.");
         }
 

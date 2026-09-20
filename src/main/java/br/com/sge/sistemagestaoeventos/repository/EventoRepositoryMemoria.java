@@ -23,11 +23,6 @@ public class EventoRepositoryMemoria implements EventoRepository{
     }
 
     @Override
-    public boolean existePorId(String id) {
-        return dados.containsKey(id);
-    }
-
-    @Override
     public Evento salvar(Evento evento) {
         dados.put(evento.getId(), evento);
         return evento;
