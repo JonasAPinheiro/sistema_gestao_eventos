@@ -239,13 +239,14 @@ class ParticipanteServiceTest {
             Participante participante = criarParticipante("Maria Silva", "maria@email.com");
             Participante outroParticipante = criarParticipante("João Souza", "joao@email.com");
             Participante dadosAtualizados = criarParticipante("Maria Silva", "joao@email.com");
+            String participanteId = participante.getId();
 
-            when(participanteRepository.buscarPorId(participante.getId()))
+            when(participanteRepository.buscarPorId(participanteId))
                     .thenReturn(Optional.of(participante));
             when(participanteRepository.buscarPorEmail("joao@email.com"))
                     .thenReturn(Optional.of(outroParticipante));
 
-            assertThatThrownBy(() -> participanteService.atualizar(participante.getId(), dadosAtualizados))
+            assertThatThrownBy(() -> participanteService.atualizar(participanteId, dadosAtualizados))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("Já existe um participante cadastrado com este e-mail.");
 
