@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -102,19 +103,23 @@ class ParticipanteServiceTest {
         void deveAtualizarParticipante() {
             Participante existente = criarParticipante("Maria Silva", "maria@email.com");
             Participante dadosAtualizados = criarParticipante("Maria Souza", "maria.souza@email.com");
+            String idOriginal = existente.getId();
+            LocalDateTime criadoEmOriginal = existente.getCriadoEm();
 
-            when(participanteRepository.buscarPorId(existente.getId()))
+            when(participanteRepository.buscarPorId(idOriginal))
                     .thenReturn(Optional.of(existente));
             when(participanteRepository.buscarPorEmail("maria.souza@email.com"))
                     .thenReturn(Optional.empty());
             when(participanteRepository.salvar(existente)).thenReturn(existente);
 
-            Participante resultado = participanteService.atualizar(existente.getId(), dadosAtualizados);
+            Participante resultado = participanteService.atualizar(idOriginal, dadosAtualizados);
 
             assertThat(resultado).isSameAs(existente);
             assertThat(resultado.getNome()).isEqualTo("Maria Souza");
             assertThat(resultado.getEmail()).isEqualTo("maria.souza@email.com");
-            verify(participanteRepository).buscarPorId(existente.getId());
+            assertThat(resultado.getId()).isEqualTo(idOriginal);
+            assertThat(resultado.getCriadoEm()).isEqualTo(criadoEmOriginal);
+            verify(participanteRepository).buscarPorId(idOriginal);
             verify(participanteRepository).buscarPorEmail("maria.souza@email.com");
             verify(participanteRepository).salvar(existente);
         }
