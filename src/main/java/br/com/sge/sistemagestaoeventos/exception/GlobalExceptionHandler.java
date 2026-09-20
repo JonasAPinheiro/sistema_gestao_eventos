@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<Map<String, Object>> construirResposta(HttpStatus status, String mensagem, String path) {
         Map<String, Object> corpo = new LinkedHashMap<>();
-        corpo.put("timestamp", LocalDateTime.now());
+        corpo.put("timestamp", LocalDateTime.now(Clock.systemDefaultZone()));
         corpo.put("status", status.value());
         corpo.put("error", status.name());
         corpo.put("message", mensagem);

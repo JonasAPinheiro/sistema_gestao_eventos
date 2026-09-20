@@ -2,7 +2,6 @@ package br.com.sge.sistemagestaoeventos.controller;
 
 import br.com.sge.sistemagestaoeventos.dto.InscricaoRequestDTO;
 import br.com.sge.sistemagestaoeventos.dto.InscricaoResponseDTO;
-import br.com.sge.sistemagestaoeventos.service.EventoService;
 import br.com.sge.sistemagestaoeventos.service.InscricaoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +12,9 @@ import java.util.List;
 public class InscricaoController {
 
     private final InscricaoService inscricaoService;
-    private final EventoService eventoService;
 
-    public InscricaoController(InscricaoService inscricaoService, EventoService eventoService) {
+    public InscricaoController(InscricaoService inscricaoService) {
         this.inscricaoService = inscricaoService;
-        this.eventoService = eventoService;
     }
 
     @PostMapping("/eventos/{eventoId}/inscricoes")

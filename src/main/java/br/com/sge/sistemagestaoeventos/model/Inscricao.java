@@ -3,6 +3,7 @@ package br.com.sge.sistemagestaoeventos.model;
 import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
 import lombok.Getter;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,7 +19,7 @@ public class Inscricao {
         this.id = UUID.randomUUID().toString();
         this.eventoId = eventoId;
         this.participanteId = participanteId;
-        this.criadoEm = LocalDateTime.now();
+        this.criadoEm = LocalDateTime.now(Clock.systemDefaultZone());
         this.status = StatusInscricao.CONFIRMADA;
     }
 
