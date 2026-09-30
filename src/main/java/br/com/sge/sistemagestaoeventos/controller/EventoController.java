@@ -21,6 +21,7 @@ public class EventoController {
         this.eventoService = eventoService;
         this.inscricaoService = inscricaoService;
     }
+
     @GetMapping("/{id}")
     public EventoResponseDTO buscarPorId(@PathVariable String id) {
         return EventoResponseDTO.from(eventoService.buscarPorId(id));
@@ -36,30 +37,12 @@ public class EventoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EventoResponseDTO cadastrar(@RequestBody EventoRequestDTO dto) {
-        Evento evento = new Evento(
-                dto.titulo(),
-                dto.descricao(),
-                dto.data(),
-                dto.horaInicio(),
-                dto.horaFim(),
-                dto.local(),
-                dto.capacidadeMaxima()
-        );
-        return EventoResponseDTO.from(eventoService.cadastrar(evento));
+        return EventoResponseDTO.from(eventoService.cadastrar(dto.toEvento()));
     }
 
     @PutMapping("/{id}")
     public EventoResponseDTO atualizar(@PathVariable String id, @RequestBody EventoRequestDTO dto) {
-        Evento dadosAtualizados = new Evento(
-                dto.titulo(),
-                dto.descricao(),
-                dto.data(),
-                dto.horaInicio(),
-                dto.horaFim(),
-                dto.local(),
-                dto.capacidadeMaxima()
-        );
-        return EventoResponseDTO.from(eventoService.atualizar(id, dadosAtualizados));
+        return EventoResponseDTO.from(eventoService.atualizar(id, dto.toEvento()));
     }
 
     @PatchMapping("/{id}/cancelamento")
