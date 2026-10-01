@@ -14,10 +14,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/eventos")
 public class EventoController {
+
     private final EventoService eventoService;
     private final InscricaoService inscricaoService;
 
-    public EventoController(EventoService eventoService, InscricaoService inscricaoService) {
+    public EventoController(
+            EventoService eventoService,
+            InscricaoService inscricaoService
+    ) {
         this.eventoService = eventoService;
         this.inscricaoService = inscricaoService;
     }
@@ -37,12 +41,19 @@ public class EventoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EventoResponseDTO cadastrar(@RequestBody EventoRequestDTO dto) {
-        return EventoResponseDTO.from(eventoService.cadastrar(dto.toEvento()));
+        return EventoResponseDTO.from(
+                eventoService.cadastrar(dto)
+        );
     }
 
     @PutMapping("/{id}")
-    public EventoResponseDTO atualizar(@PathVariable String id, @RequestBody EventoRequestDTO dto) {
-        return EventoResponseDTO.from(eventoService.atualizar(id, dto.toEvento()));
+    public EventoResponseDTO atualizar(
+            @PathVariable String id,
+            @RequestBody EventoRequestDTO dto
+    ) {
+        return EventoResponseDTO.from(
+                eventoService.atualizar(id, dto)
+        );
     }
 
     @PatchMapping("/{id}/cancelamento")
@@ -52,8 +63,10 @@ public class EventoController {
 
     @GetMapping("/{id}/vagas")
     public VagasResponseDTO consultarVagas(@PathVariable String id) {
+
         Evento evento = eventoService.buscarPorId(id);
         long confirmadas = inscricaoService.contarConfirmadas(id);
+
         return new VagasResponseDTO(
                 evento.getCapacidadeMaxima(),
                 confirmadas,

@@ -1,6 +1,7 @@
 package br.com.sge.sistemagestaoeventos.model;
 
 import br.com.sge.sistemagestaoeventos.enums.StatusEvento;
+import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -29,8 +30,9 @@ public class Evento {
     private int capacidadeMaxima;
     private StatusEvento status;
     private final LocalDateTime criadoEm;
+    private final ModalidadeEvento modalidade;
 
-    public Evento(String titulo, String descricao, LocalDate data, LocalTime horaInicio, LocalTime horaFim, String local, int capacidadeMaxima) {
+    public Evento(String titulo, String descricao, LocalDate data, LocalTime horaInicio, LocalTime horaFim, String local, int capacidadeMaxima, ModalidadeEvento modalidade) {
         this.id = UUID.randomUUID().toString();
         this.titulo = titulo;
         this.descricao = descricao;
@@ -41,6 +43,7 @@ public class Evento {
         this.capacidadeMaxima = capacidadeMaxima;
         this.status = StatusEvento.ATIVO;
         this.criadoEm = LocalDateTime.now(Clock.systemDefaultZone());
+        this.modalidade = modalidade;
     }
 
     public void cancelar() {

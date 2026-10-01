@@ -5,6 +5,7 @@ import br.com.sge.sistemagestaoeventos.exception.InscricaoNaoEncontradaException
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
+import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import br.com.sge.sistemagestaoeventos.model.Participante;
 import br.com.sge.sistemagestaoeventos.repository.InscricaoRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -230,12 +231,12 @@ class InscricaoServiceTest {
 
     private static Evento criarEventoFuturo(int capacidadeMaxima) {
         return new Evento("Evento de Teste", "Descrição do evento", LocalDate.now().plusDays(1),
-                LocalTime.of(18, 0), LocalTime.of(20, 0), "Centro de Eventos", capacidadeMaxima);
+                LocalTime.of(18, 0), LocalTime.of(20, 0), "Centro de Eventos", capacidadeMaxima, new ModalidadeAberta());
     }
 
     private static Evento criarEventoPassado(int capacidadeMaxima) {
         return new Evento("Evento de Teste", "Descrição do evento", LocalDate.now().minusDays(1),
-                LocalTime.of(18, 0), LocalTime.of(20, 0), "Centro de Eventos", capacidadeMaxima);
+                LocalTime.of(18, 0), LocalTime.of(20, 0), "Centro de Eventos", capacidadeMaxima, new ModalidadeAberta());
     }
 
     private static Participante criarParticipante() {

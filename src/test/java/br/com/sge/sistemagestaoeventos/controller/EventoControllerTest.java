@@ -1,8 +1,10 @@
 package br.com.sge.sistemagestaoeventos.controller;
 
 import br.com.sge.sistemagestaoeventos.dto.EventoRequestDTO;
+import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.exception.EventoNaoEncontradoException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import br.com.sge.sistemagestaoeventos.service.EventoService;
 import br.com.sge.sistemagestaoeventos.service.InscricaoService;
 import tools.jackson.databind.ObjectMapper;
@@ -13,11 +15,14 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -36,6 +41,7 @@ class EventoControllerTest {
 
     @MockitoBean
     private InscricaoService inscricaoService;
+
     @Test
     @DisplayName("GET /eventos/{id} - Deve retornar status 200 e o evento quando o ID existir")
     void deveBuscarPorIdExistente() throws Exception {
@@ -49,7 +55,8 @@ class EventoControllerTest {
                 .andExpect(jsonPath("$.titulo").value("Evento de Teste"))
                 .andExpect(jsonPath("$.descricao").value("Descrição do evento"))
                 .andExpect(jsonPath("$.local").value("Centro de Eventos"))
-                .andExpect(jsonPath("$.capacidadeMaxima").value(100));
+                .andExpect(jsonPath("$.capacidadeMaxima").value(100))
+                .andExpect(jsonPath("$.tipoModalidade").value("ABERTO"));
 
         verify(eventoService).buscarPorId("1");
     }
@@ -80,7 +87,9 @@ class EventoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].titulo").value("Evento de Tecnologia"))
-                .andExpect(jsonPath("$[1].titulo").value("Evento de Java"));
+                .andExpect(jsonPath("$[1].titulo").value("Evento de Java"))
+                .andExpect(jsonPath("$[0].tipoModalidade").value("ABERTO"))
+                .andExpect(jsonPath("$[1].tipoModalidade").value("ABERTO"));
 
         verify(eventoService).listarTodos();
     }
@@ -90,17 +99,9 @@ class EventoControllerTest {
     void deveCadastrarEvento() throws Exception {
         Evento eventoCriado = criarEvento("Novo Evento");
 
-        EventoRequestDTO dto = new EventoRequestDTO(
-                "Novo Evento",
-                "Descrição do evento",
-                LocalDate.now().plusDays(10),
-                LocalTime.of(18, 0),
-                LocalTime.of(20, 0),
-                "Centro de Eventos",
-                100
-        );
+        EventoRequestDTO dto = criarDto("Novo Evento", "Descrição do evento", 100, TipoModalidade.ABERTO, null);
 
-        when(eventoService.cadastrar(any(Evento.class)))
+        when(eventoService.cadastrar(any(EventoRequestDTO.class)))
                 .thenReturn(eventoCriado);
 
         mockMvc.perform(post("/eventos")
@@ -110,9 +111,40 @@ class EventoControllerTest {
                 .andExpect(jsonPath("$.titulo").value("Novo Evento"))
                 .andExpect(jsonPath("$.descricao").value("Descrição do evento"))
                 .andExpect(jsonPath("$.local").value("Centro de Eventos"))
-                .andExpect(jsonPath("$.capacidadeMaxima").value(100));
+                .andExpect(jsonPath("$.capacidadeMaxima").value(100))
+                .andExpect(jsonPath("$.tipoModalidade").value("ABERTO"));
 
-        verify(eventoService).cadastrar(any(Evento.class));
+        verify(eventoService).cadastrar(any(EventoRequestDTO.class));
+    }
+
+    @Test
+    @DisplayName("POST /eventos - Deve enviar tipo e idade mínima recebidos no JSON para o service")
+    void deveEnviarDadosDaModalidadeParaOServico() throws Exception {
+        Evento eventoCriado = criarEvento("Evento com Restrição");
+
+        EventoRequestDTO dto = criarDto(
+                "Evento com Restrição",
+                "Descrição",
+                100,
+                TipoModalidade.RESTRICAO_IDADE,
+                18
+        );
+
+        when(eventoService.cadastrar(any(EventoRequestDTO.class)))
+                .thenReturn(eventoCriado);
+
+        mockMvc.perform(post("/eventos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isCreated());
+
+        var captor = org.mockito.ArgumentCaptor.forClass(EventoRequestDTO.class);
+        verify(eventoService).cadastrar(captor.capture());
+
+        assertThat(captor.getValue().tipoModalidade())
+                .isEqualTo(TipoModalidade.RESTRICAO_IDADE);
+        assertThat(captor.getValue().idadeMinima())
+                .isEqualTo(18);
     }
 
     @Test
@@ -120,17 +152,15 @@ class EventoControllerTest {
     void deveAtualizarEvento() throws Exception {
         Evento eventoAtualizado = criarEvento("Evento Atualizado");
 
-        EventoRequestDTO dto = new EventoRequestDTO(
+        EventoRequestDTO dto = criarDto(
                 "Evento Atualizado",
                 "Nova descrição",
-                LocalDate.now().plusDays(15),
-                LocalTime.of(19, 0),
-                LocalTime.of(21, 0),
-                "Novo Local",
-                200
+                200,
+                TipoModalidade.EXCLUSIVO_ALUNOS,
+                null
         );
 
-        when(eventoService.atualizar(eq("1"), any(Evento.class)))
+        when(eventoService.atualizar(eq("1"), any(EventoRequestDTO.class)))
                 .thenReturn(eventoAtualizado);
 
         mockMvc.perform(put("/eventos/1")
@@ -140,7 +170,7 @@ class EventoControllerTest {
                 .andExpect(jsonPath("$.titulo").value("Evento Atualizado"))
                 .andExpect(jsonPath("$.capacidadeMaxima").value(100));
 
-        verify(eventoService).atualizar(eq("1"), any(Evento.class));
+        verify(eventoService).atualizar(eq("1"), any(EventoRequestDTO.class));
     }
 
     @Test
@@ -189,7 +219,28 @@ class EventoControllerTest {
                 LocalTime.of(18, 0),
                 LocalTime.of(20, 0),
                 "Centro de Eventos",
-                100
+                100,
+                new ModalidadeAberta()
+        );
+    }
+
+    private static EventoRequestDTO criarDto(
+            String titulo,
+            String descricao,
+            int capacidadeMaxima,
+            TipoModalidade tipoModalidade,
+            Integer idadeMinima
+    ) {
+        return new EventoRequestDTO(
+                titulo,
+                descricao,
+                LocalDate.now().plusDays(10),
+                LocalTime.of(18, 0),
+                LocalTime.of(20, 0),
+                "Centro de Eventos",
+                capacidadeMaxima,
+                tipoModalidade,
+                idadeMinima
         );
     }
 }
