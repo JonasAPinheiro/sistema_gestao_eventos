@@ -1,6 +1,7 @@
 package br.com.sge.sistemagestaoeventos.dto;
 
 import br.com.sge.sistemagestaoeventos.enums.StatusEvento;
+import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.model.Evento;
 
 import java.time.LocalDate;
@@ -17,7 +18,8 @@ public record EventoResponseDTO(
         String local,
         int capacidadeMaxima,
         StatusEvento status,
-        LocalDateTime criadoEm
+        LocalDateTime criadoEm,
+        TipoModalidade tipoModalidade
 ) {
     public static EventoResponseDTO from(Evento evento) {
         return new EventoResponseDTO(
@@ -30,7 +32,8 @@ public record EventoResponseDTO(
                 evento.getLocal(),
                 evento.getCapacidadeMaxima(),
                 evento.getStatus(),
-                evento.getCriadoEm()
+                evento.getCriadoEm(),
+                evento.getModalidade().getTipo()
         );
     }
 }

@@ -3,7 +3,9 @@ package br.com.sge.sistemagestaoeventos.model.modalidade.factory;
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeExclusivaParaAlunos;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CriadorModalidadeExclusivaParaAlunos implements CriadorModalidade{
     @Override
     public TipoModalidade getTipo() { return TipoModalidade.EXCLUSIVO_ALUNOS; }
