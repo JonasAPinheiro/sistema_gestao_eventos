@@ -2,6 +2,9 @@ package br.com.sge.sistemagestaoeventos.controller;
 
 import br.com.sge.sistemagestaoeventos.dto.InscricaoRequestDTO;
 import br.com.sge.sistemagestaoeventos.dto.InscricaoResponseDTO;
+import br.com.sge.sistemagestaoeventos.model.Inscricao;
+import br.com.sge.sistemagestaoeventos.model.comprovante.Comprovante;
+import br.com.sge.sistemagestaoeventos.service.ComprovanteService;
 import br.com.sge.sistemagestaoeventos.service.InscricaoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -12,15 +15,22 @@ import java.util.List;
 public class InscricaoController {
 
     private final InscricaoService inscricaoService;
+    private final ComprovanteService comprovanteService;
 
-    public InscricaoController(InscricaoService inscricaoService) {
+    public InscricaoController(InscricaoService inscricaoService, ComprovanteService comprovanteService) {
         this.inscricaoService = inscricaoService;
+        this.comprovanteService = comprovanteService;
     }
 
     @PostMapping("/eventos/{eventoId}/inscricoes")
     @ResponseStatus(HttpStatus.CREATED)
     public InscricaoResponseDTO inscrever(@PathVariable String eventoId, @RequestBody InscricaoRequestDTO dto) {
-        return InscricaoResponseDTO.from(inscricaoService.inscrever(eventoId, dto.participanteId()));
+
+        Inscricao inscricao = inscricaoService.inscrever(eventoId, dto.participanteId());
+        Comprovante comprovante = comprovanteService.emitir(inscricao);
+        inscricao.setComprovante(comprovante);
+
+        return InscricaoResponseDTO.from(inscricao);
     }
 
     @DeleteMapping("/eventos/{eventoId}/inscricoes/{participanteId}")
