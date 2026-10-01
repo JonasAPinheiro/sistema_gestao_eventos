@@ -1,8 +1,13 @@
 package br.com.sge.sistemagestaoeventos.service;
 
+import br.com.sge.sistemagestaoeventos.dto.EventoRequestDTO;
+import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.exception.EventoNaoEncontradoException;
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
+import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
+import br.com.sge.sistemagestaoeventos.model.modalidade.factory.ModalidadeEventoFactory;
 import br.com.sge.sistemagestaoeventos.repository.EventoRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -27,6 +32,9 @@ class EventoServiceTest {
 
     @Mock
     private EventoRepository eventoRepository;
+
+    @Mock
+    private ModalidadeEventoFactory modalidadeEventoFactory;
 
     @InjectMocks
     private EventoService eventoService;
@@ -83,26 +91,44 @@ class EventoServiceTest {
     class Negocio {
 
         @Test
-        @DisplayName("Deve cadastrar evento válido")
+        @DisplayName("Deve cadastrar evento válido e criar a modalidade pela Factory")
         void deveCadastrarEvento() {
-            Evento entrada = criarEvento("Novo Evento");
-            Evento salvo = criarEvento("Novo Evento");
+            EventoRequestDTO dto = criarDto("Novo Evento");
+            ModalidadeEvento modalidade = new ModalidadeAberta();
+            Evento eventoSalvo = dto.toEvento(modalidade);
 
-            when(eventoRepository.salvar(entrada))
-                    .thenReturn(salvo);
+            when(modalidadeEventoFactory.criar(TipoModalidade.ABERTO, null))
+                    .thenReturn(modalidade);
+            when(eventoRepository.salvar(any(Evento.class)))
+                    .thenReturn(eventoSalvo);
 
-            Evento resultado = eventoService.cadastrar(entrada);
+            Evento resultado = eventoService.cadastrar(dto);
 
-            assertThat(resultado).isEqualTo(salvo);
+            assertThat(resultado).isEqualTo(eventoSalvo);
+            assertThat(resultado.getModalidade()).isSameAs(modalidade);
 
-            verify(eventoRepository).salvar(entrada);
+            verify(modalidadeEventoFactory)
+                    .criar(TipoModalidade.ABERTO, null);
+            verify(eventoRepository).salvar(any(Evento.class));
         }
 
         @Test
-        @DisplayName("Deve atualizar evento existente")
+        @DisplayName("Deve atualizar evento existente sem alterar a modalidade")
         void deveAtualizarEvento() {
-            Evento existente = criarEvento("Evento Antigo");
-            Evento dadosAtualizados = criarEvento("Evento Atualizado");
+            ModalidadeEvento modalidadeOriginal = new ModalidadeAberta();
+            Evento existente = criarEvento("Evento Antigo", modalidadeOriginal);
+
+            EventoRequestDTO dadosAtualizados = criarDto(
+                    "Evento Atualizado",
+                    "Nova descrição",
+                    LocalDate.now().plusDays(15),
+                    LocalTime.of(19, 0),
+                    LocalTime.of(21, 0),
+                    "Novo Local",
+                    200,
+                    TipoModalidade.RESTRICAO_IDADE,
+                    18
+            );
 
             when(eventoRepository.buscarPorId("1"))
                     .thenReturn(Optional.of(existente));
@@ -114,27 +140,24 @@ class EventoServiceTest {
 
             assertThat(resultado.getTitulo())
                     .isEqualTo("Evento Atualizado");
-
             assertThat(resultado.getDescricao())
-                    .isEqualTo(dadosAtualizados.getDescricao());
-
+                    .isEqualTo("Nova descrição");
             assertThat(resultado.getData())
-                    .isEqualTo(dadosAtualizados.getData());
-
+                    .isEqualTo(dadosAtualizados.data());
             assertThat(resultado.getHoraInicio())
-                    .isEqualTo(dadosAtualizados.getHoraInicio());
-
+                    .isEqualTo(dadosAtualizados.horaInicio());
             assertThat(resultado.getHoraFim())
-                    .isEqualTo(dadosAtualizados.getHoraFim());
-
+                    .isEqualTo(dadosAtualizados.horaFim());
             assertThat(resultado.getLocal())
-                    .isEqualTo(dadosAtualizados.getLocal());
-
+                    .isEqualTo(dadosAtualizados.local());
             assertThat(resultado.getCapacidadeMaxima())
-                    .isEqualTo(dadosAtualizados.getCapacidadeMaxima());
+                    .isEqualTo(dadosAtualizados.capacidadeMaxima());
+            assertThat(resultado.getModalidade())
+                    .isSameAs(modalidadeOriginal);
 
             verify(eventoRepository).buscarPorId("1");
             verify(eventoRepository).salvar(existente);
+            verifyNoInteractions(modalidadeEventoFactory);
         }
 
         @Test
@@ -177,10 +200,9 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando título não for informado")
         void deveValidarTituloObrigatorio() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setTitulo("");
+            EventoRequestDTO dto = criarDto("");
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("O título do evento é obrigatório.");
 
@@ -190,10 +212,9 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando título for nulo")
         void deveValidarTituloNulo() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setTitulo(null);
+            EventoRequestDTO dto = criarDto(null);
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("O título do evento é obrigatório.");
 
@@ -203,10 +224,13 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando descrição não for informada")
         void deveValidarDescricaoObrigatoria() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setDescricao("");
+            EventoRequestDTO dto = criarDto(
+                    "Evento Válido", "", LocalDate.now().plusDays(10),
+                    LocalTime.of(18, 0), LocalTime.of(20, 0),
+                    "Centro de Eventos", 100, TipoModalidade.ABERTO, null
+            );
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("A descrição do evento é obrigatória.");
 
@@ -216,10 +240,13 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando descrição for nula")
         void deveValidarDescricaoNula() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setDescricao(null);
+            EventoRequestDTO dto = criarDto(
+                    "Evento Válido", null, LocalDate.now().plusDays(10),
+                    LocalTime.of(18, 0), LocalTime.of(20, 0),
+                    "Centro de Eventos", 100, TipoModalidade.ABERTO, null
+            );
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("A descrição do evento é obrigatória.");
 
@@ -229,10 +256,13 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando data for anterior à atual")
         void deveValidarDataDoEvento() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setData(LocalDate.now().minusDays(1));
+            EventoRequestDTO dto = criarDto(
+                    "Evento Válido", "Descrição do evento", LocalDate.now().minusDays(1),
+                    LocalTime.of(18, 0), LocalTime.of(20, 0),
+                    "Centro de Eventos", 100, TipoModalidade.ABERTO, null
+            );
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("A data do evento não pode ser anterior à data atual.");
 
@@ -242,10 +272,13 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando data for nula")
         void deveValidarDataNula() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setData(null);
+            EventoRequestDTO dto = criarDto(
+                    "Evento Válido", "Descrição do evento", null,
+                    LocalTime.of(18, 0), LocalTime.of(20, 0),
+                    "Centro de Eventos", 100, TipoModalidade.ABERTO, null
+            );
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("A data do evento não pode ser anterior à data atual.");
 
@@ -255,10 +288,13 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando hora de início for nula")
         void deveValidarHoraInicioNula() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setHoraInicio(null);
+            EventoRequestDTO dto = criarDto(
+                    "Evento Válido", "Descrição do evento", LocalDate.now().plusDays(10),
+                    null, LocalTime.of(20, 0),
+                    "Centro de Eventos", 100, TipoModalidade.ABERTO, null
+            );
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("O horário de término deve ser posterior ao horário de início.");
 
@@ -268,10 +304,13 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando hora de fim for nula")
         void deveValidarHoraFimNula() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setHoraFim(null);
+            EventoRequestDTO dto = criarDto(
+                    "Evento Válido", "Descrição do evento", LocalDate.now().plusDays(10),
+                    LocalTime.of(18, 0), null,
+                    "Centro de Eventos", 100, TipoModalidade.ABERTO, null
+            );
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("O horário de término deve ser posterior ao horário de início.");
 
@@ -281,11 +320,13 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando horário de término não for posterior ao início")
         void deveValidarHorarioDoEvento() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setHoraInicio(java.time.LocalTime.of(18, 0));
-            evento.setHoraFim(java.time.LocalTime.of(18, 0));
+            EventoRequestDTO dto = criarDto(
+                    "Evento Válido", "Descrição do evento", LocalDate.now().plusDays(10),
+                    LocalTime.of(18, 0), LocalTime.of(18, 0),
+                    "Centro de Eventos", 100, TipoModalidade.ABERTO, null
+            );
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("O horário de término deve ser posterior ao horário de início.");
 
@@ -295,10 +336,13 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando capacidade máxima for zero")
         void deveValidarCapacidadeMaxima() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setCapacidadeMaxima(0);
+            EventoRequestDTO dto = criarDto(
+                    "Evento Válido", "Descrição do evento", LocalDate.now().plusDays(10),
+                    LocalTime.of(18, 0), LocalTime.of(20, 0),
+                    "Centro de Eventos", 0, TipoModalidade.ABERTO, null
+            );
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("A capacidade máxima deve ser um número inteiro maior que zero.");
 
@@ -308,10 +352,13 @@ class EventoServiceTest {
         @Test
         @DisplayName("Deve lançar exceção quando capacidade máxima for negativa")
         void deveRejeitarCapacidadeNegativa() {
-            Evento evento = criarEvento("Evento Válido");
-            evento.setCapacidadeMaxima(-10);
+            EventoRequestDTO dto = criarDto(
+                    "Evento Válido", "Descrição do evento", LocalDate.now().plusDays(10),
+                    LocalTime.of(18, 0), LocalTime.of(20, 0),
+                    "Centro de Eventos", -10, TipoModalidade.ABERTO, null
+            );
 
-            assertThatThrownBy(() -> eventoService.cadastrar(evento))
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("A capacidade máxima deve ser um número inteiro maior que zero.");
 
@@ -320,6 +367,10 @@ class EventoServiceTest {
     }
 
     private static Evento criarEvento(String titulo) {
+        return criarEvento(titulo, new ModalidadeAberta());
+    }
+
+    private static Evento criarEvento(String titulo, ModalidadeEvento modalidade) {
         return new Evento(
                 titulo,
                 "Descrição do evento",
@@ -327,7 +378,46 @@ class EventoServiceTest {
                 LocalTime.of(18, 0),
                 LocalTime.of(20, 0),
                 "Centro de Eventos",
-                100
+                100,
+                modalidade
+        );
+    }
+
+    private static EventoRequestDTO criarDto(String titulo) {
+        return criarDto(
+                titulo,
+                "Descrição do evento",
+                LocalDate.now().plusDays(10),
+                LocalTime.of(18, 0),
+                LocalTime.of(20, 0),
+                "Centro de Eventos",
+                100,
+                TipoModalidade.ABERTO,
+                null
+        );
+    }
+
+    private static EventoRequestDTO criarDto(
+            String titulo,
+            String descricao,
+            LocalDate data,
+            LocalTime horaInicio,
+            LocalTime horaFim,
+            String local,
+            int capacidadeMaxima,
+            TipoModalidade tipoModalidade,
+            Integer idadeMinima
+    ) {
+        return new EventoRequestDTO(
+                titulo,
+                descricao,
+                data,
+                horaInicio,
+                horaFim,
+                local,
+                capacidadeMaxima,
+                tipoModalidade,
+                idadeMinima
         );
     }
 }
