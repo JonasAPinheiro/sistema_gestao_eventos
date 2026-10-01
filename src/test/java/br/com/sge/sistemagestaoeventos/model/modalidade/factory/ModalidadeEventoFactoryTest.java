@@ -2,6 +2,10 @@ package br.com.sge.sistemagestaoeventos.model.modalidade.factory;
 
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
+import br.com.sge.sistemagestaoeventos.factory.modalidade.CriadorModalidadeAberta;
+import br.com.sge.sistemagestaoeventos.factory.modalidade.CriadorModalidadeComRestricaoDeIdade;
+import br.com.sge.sistemagestaoeventos.factory.modalidade.CriadorModalidadeExclusivaParaAlunos;
+import br.com.sge.sistemagestaoeventos.factory.modalidade.ModalidadeEventoFactory;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeComRestricaoDeIdade;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeExclusivaParaAlunos;

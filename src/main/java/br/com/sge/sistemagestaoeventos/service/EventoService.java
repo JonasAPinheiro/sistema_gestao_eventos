@@ -5,7 +5,7 @@ import br.com.sge.sistemagestaoeventos.exception.EventoNaoEncontradoException;
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
-import br.com.sge.sistemagestaoeventos.model.modalidade.factory.ModalidadeEventoFactory;
+import br.com.sge.sistemagestaoeventos.factory.modalidade.ModalidadeEventoFactory;
 import br.com.sge.sistemagestaoeventos.repository.EventoRepository;
 import org.springframework.stereotype.Service;
 

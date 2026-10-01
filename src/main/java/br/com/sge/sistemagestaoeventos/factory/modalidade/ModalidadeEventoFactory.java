@@ -1,4 +1,4 @@
-package br.com.sge.sistemagestaoeventos.model.modalidade.factory;
+package br.com.sge.sistemagestaoeventos.factory.modalidade;
 
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
