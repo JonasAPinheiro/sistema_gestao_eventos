@@ -1,7 +1,9 @@
 package br.com.sge.sistemagestaoeventos.model;
 
 import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
+import br.com.sge.sistemagestaoeventos.model.comprovante.Comprovante;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -14,6 +16,8 @@ public class Inscricao {
     private final String participanteId;
     private final LocalDateTime criadoEm;
     private StatusInscricao status;
+    @Setter
+    private Comprovante comprovante;
 
     public Inscricao(String eventoId, String participanteId) {
         this.id = UUID.randomUUID().toString();

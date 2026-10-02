@@ -10,15 +10,20 @@ public record InscricaoResponseDTO(
         String eventoId,
         String participanteId,
         StatusInscricao status,
-        LocalDateTime criadoEm
+        LocalDateTime criadoEm,
+        ComprovanteResponseDTO comprovante
 ) {
-    public static InscricaoResponseDTO from(Inscricao inscricao) {
+
+    public static InscricaoResponseDTO from(
+            Inscricao inscricao
+    ) {
         return new InscricaoResponseDTO(
                 inscricao.getId(),
                 inscricao.getEventoId(),
                 inscricao.getParticipanteId(),
                 inscricao.getStatus(),
-                inscricao.getCriadoEm()
+                inscricao.getCriadoEm(),
+                ComprovanteResponseDTO.from(inscricao.getComprovante())
         );
     }
 }
