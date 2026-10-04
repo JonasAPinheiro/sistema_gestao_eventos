@@ -5,6 +5,8 @@ import br.com.sge.sistemagestaoeventos.exception.InscricaoNaoEncontradaException
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
+import br.com.sge.sistemagestaoeventos.model.Participante;
+import br.com.sge.sistemagestaoeventos.model.modalidade.ValidadorElegibilidade;
 import br.com.sge.sistemagestaoeventos.repository.InscricaoRepository;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +29,11 @@ public class InscricaoService {
 
     public Inscricao inscrever(String eventoId, String participanteId) {
         Evento evento = eventoService.buscarPorId(eventoId);
-        participanteService.buscarPorId(participanteId);
+        Participante participante = participanteService.buscarPorId(participanteId);
+
+        if (participante == null) {
+            throw new RegraNegocioException("O participante deve estar cadastrado para realizar a inscrição.");
+        }
 
         if (evento.getStatus() == StatusEvento.CANCELADO) {
             throw new RegraNegocioException("Não é possível realizar inscrição em um evento cancelado.");
@@ -43,8 +49,14 @@ public class InscricaoService {
                     throw new RegraNegocioException("O participante já possui uma inscrição ativa neste evento.");
                 });
 
-        if (inscricaoRepository.contarConfirmadasPorEvento(eventoId) >= evento.getCapacidadeMaxima()) {
-            throw new RegraNegocioException("O evento atingiu sua capacidade máxima.");
+        long vagasDisponiveis = evento.getCapacidadeMaxima() - inscricaoRepository.contarConfirmadasPorEvento(eventoId);
+
+        if (vagasDisponiveis <= 0) {
+            throw new RegraNegocioException("Não há vagas disponíveis para este evento.");
+        }
+
+        if (evento.getModalidade() instanceof ValidadorElegibilidade validador) {
+            validador.validarElegibilidade(participante);
         }
 
         return inscricaoRepository.salvar(new Inscricao(eventoId, participanteId));

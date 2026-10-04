@@ -7,6 +7,7 @@ import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import br.com.sge.sistemagestaoeventos.model.Participante;
+import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeExclusivaParaAlunos;
 import br.com.sge.sistemagestaoeventos.repository.InscricaoRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -218,9 +219,46 @@ class InscricaoServiceTest {
 
             assertThatThrownBy(() -> inscricaoService.inscrever("evento-1", "participante-1"))
                     .isInstanceOf(RegraNegocioException.class)
-                    .hasMessage("O evento atingiu sua capacidade máxima.");
+                    .hasMessage("Não há vagas disponíveis para este evento.");
 
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
+        }
+
+        @Test
+        @DisplayName("Deve realizar inscrição quando participante atende à elegibilidade da modalidade")
+        void deveRealizarInscricaoComElegibilidadeValida() {
+            Evento evento = new Evento(
+                    "Evento Exclusivo",
+                    "Descrição do evento",
+                    LocalDate.now().plusDays(1),
+                    LocalTime.of(18, 0),
+                    LocalTime.of(20, 0),
+                    "Centro de Eventos",
+                    100,
+                    new ModalidadeExclusivaParaAlunos()
+            );
+
+            Participante participante = criarParticipante();
+
+            when(eventoService.buscarPorId("evento-1")).thenReturn(evento);
+            when(participanteService.buscarPorId("participante-1")).thenReturn(participante);
+            when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante(
+                    "evento-1",
+                    "participante-1"
+            )).thenReturn(Optional.empty());
+            when(inscricaoRepository.contarConfirmadasPorEvento("evento-1"))
+                    .thenReturn(0L);
+            when(inscricaoRepository.salvar(any(Inscricao.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            Inscricao resultado =
+                    inscricaoService.inscrever("evento-1", "participante-1");
+
+            assertThat(resultado.getEventoId()).isEqualTo("evento-1");
+            assertThat(resultado.getParticipanteId()).isEqualTo("participante-1");
+            assertThat(resultado.getStatus()).isEqualTo(StatusInscricao.CONFIRMADA);
+
+            verify(inscricaoRepository).salvar(any(Inscricao.class));
         }
     }
 
@@ -240,7 +278,7 @@ class InscricaoServiceTest {
     }
 
     private static Participante criarParticipante() {
-        return new Participante("Maria", "maria@email.com");
+        return new Participante("12345", "Maria", "maria@email.com", LocalDate.of(1995, 1, 1));
     }
 
     private static Inscricao criarInscricao(String eventoId, String participanteId) {
