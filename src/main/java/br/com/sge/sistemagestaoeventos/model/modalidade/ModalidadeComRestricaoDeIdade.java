@@ -8,6 +8,7 @@ import lombok.Getter;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 
 @Getter
@@ -46,6 +47,12 @@ public class ModalidadeComRestricaoDeIdade implements ModalidadeEvento, Validado
             throw new RegraNegocioException(
                     "O participante não possui a idade mínima exigida para este evento."
             );
+        }
+    }
+    @Override
+    public void validarCancelamento(LocalDateTime inicioEvento, LocalDateTime momentoCancelamento, String motivo) {
+        if (motivo == null || motivo.isBlank()) {
+            throw new RegraNegocioException("O motivo do cancelamento é obrigatório.");
         }
     }
 }
