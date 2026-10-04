@@ -10,6 +10,7 @@ public record InscricaoResponseDTO(
         String eventoId,
         String participanteId,
         StatusInscricao status,
+        String motivoCancelamento,
         LocalDateTime criadoEm,
         ComprovanteResponseDTO comprovante
 ) {
@@ -22,6 +23,7 @@ public record InscricaoResponseDTO(
                 inscricao.getEventoId(),
                 inscricao.getParticipanteId(),
                 inscricao.getStatus(),
+                inscricao.getMotivoCancelamento(),
                 inscricao.getCriadoEm(),
                 ComprovanteResponseDTO.from(inscricao.getComprovante())
         );
