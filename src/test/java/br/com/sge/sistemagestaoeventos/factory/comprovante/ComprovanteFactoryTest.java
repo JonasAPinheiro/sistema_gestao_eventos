@@ -1,9 +1,7 @@
 package br.com.sge.sistemagestaoeventos.factory.comprovante;
 
 import br.com.sge.sistemagestaoeventos.enums.TipoComprovante;
-import br.com.sge.sistemagestaoeventos.model.comprovante.EmissorComprovante;
-import br.com.sge.sistemagestaoeventos.model.comprovante.EmissorComprovanteDigital;
-import br.com.sge.sistemagestaoeventos.model.comprovante.EmissorComprovanteSimples;
+import br.com.sge.sistemagestaoeventos.model.comprovante.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +16,7 @@ class ComprovanteFactoryTest {
             new ComprovanteFactory(
                     List.of(
                             new EmissorComprovanteSimples(),
-                            new EmissorComprovanteDigital()
+                            new EmissorComprovanteDigital(new GeradorHashInscricaoSha256(),new EscritorArquivoEmDisco(),"comprovantes")
                     )
             );
 
