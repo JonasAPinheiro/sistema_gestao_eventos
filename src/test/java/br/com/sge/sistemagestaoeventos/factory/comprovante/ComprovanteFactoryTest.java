@@ -49,6 +49,26 @@ class ComprovanteFactoryTest {
     }
 
     @Test
+    @DisplayName("Deve disponibilizar estratégias distintas para cada formato de comprovante")
+    void deveDisponibilizarEstrategiasDistintasParaCadaFormato() {
+
+        EmissorComprovante emissorSimples =
+                factory.obterEmissor(TipoComprovante.SIMPLES);
+
+        EmissorComprovante emissorDigital =
+                factory.obterEmissor(TipoComprovante.DIGITAL_COMPLETO);
+
+        assertThat(emissorSimples)
+                .isNotSameAs(emissorDigital);
+
+        assertThat(emissorSimples.getTipo())
+                .isEqualTo(TipoComprovante.SIMPLES);
+
+        assertThat(emissorDigital.getTipo())
+                .isEqualTo(TipoComprovante.DIGITAL_COMPLETO);
+    }
+
+    @Test
     @DisplayName("Deve lançar exceção quando não houver emissor configurado")
     void deveLancarExcecaoQuandoNaoHouverEmissor() {
 
