@@ -2,22 +2,18 @@ package br.com.sge.sistemagestaoeventos.controller;
 
 import br.com.sge.sistemagestaoeventos.dto.InscricaoRequestDTO;
 import br.com.sge.sistemagestaoeventos.dto.InscricaoResponseDTO;
-import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.comprovante.Comprovante;
 import br.com.sge.sistemagestaoeventos.service.ComprovanteService;
 import br.com.sge.sistemagestaoeventos.service.ExportacaoComprovanteService;
 import br.com.sge.sistemagestaoeventos.service.InscricaoService;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.MalformedURLException;
-import java.nio.file.Path;
 import java.util.List;
 
 @RestController
