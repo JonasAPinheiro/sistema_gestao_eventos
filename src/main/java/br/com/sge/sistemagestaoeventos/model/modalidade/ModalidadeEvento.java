@@ -5,6 +5,5 @@ import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 
 public interface ModalidadeEvento {
     TipoModalidade getTipo();
-
     TipoComprovante getTipoComprovante();
 }
