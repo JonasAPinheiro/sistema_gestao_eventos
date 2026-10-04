@@ -108,14 +108,15 @@ class InscricaoControllerTest {
         mockMvc.perform(
                         delete(
                                 "/eventos/evento-1/inscricoes/participante-1"
-                        )
+                        ).param("motivo", "Mudança de planos")
                 )
                 .andExpect(status().isNoContent());
 
         verify(inscricaoService)
                 .cancelar(
                         "evento-1",
-                        "participante-1"
+                        "participante-1",
+                        "Mudança de planos"
                 );
     }
 
@@ -127,6 +128,7 @@ class InscricaoControllerTest {
                 "evento-1",
                 "participante-1"
         );
+        inscricao.cancelar("Mudança de planos");
 
         when(inscricaoService.listarPorEvento("evento-1"))
                 .thenReturn(List.of(inscricao));
@@ -140,6 +142,8 @@ class InscricaoControllerTest {
                         .value("evento-1"))
                 .andExpect(jsonPath("$[0].participanteId")
                         .value("participante-1"))
+                .andExpect(jsonPath("$[0].motivoCancelamento")
+                        .value("Mudança de planos"))
                 .andExpect(jsonPath("$[0].comprovante")
                         .exists())
                 .andExpect(jsonPath("$[0].comprovante.tipo")

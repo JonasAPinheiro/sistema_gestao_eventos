@@ -138,13 +138,15 @@ class InscricaoServiceTest {
         @DisplayName("Deve cancelar inscrição ativa")
         void deveCancelarInscricaoAtiva() {
             Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+            String motivo = "Mudança de planos";
             prepararEventoEParticipanteExistentes();
             when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.of(inscricao));
 
-            inscricaoService.cancelar("evento-1", "participante-1");
+            inscricaoService.cancelar("evento-1", "participante-1", motivo);
 
             assertThat(inscricao.getStatus()).isEqualTo(StatusInscricao.CANCELADA);
+            assertThat(inscricao.getMotivoCancelamento()).isEqualTo(motivo);
             verify(inscricaoRepository).salvar(inscricao);
         }
 
@@ -155,7 +157,7 @@ class InscricaoServiceTest {
             when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> inscricaoService.cancelar("evento-1", "participante-1"))
+            assertThatThrownBy(() -> inscricaoService.cancelar("evento-1", "participante-1", null))
                     .isInstanceOf(InscricaoNaoEncontradaException.class);
 
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
