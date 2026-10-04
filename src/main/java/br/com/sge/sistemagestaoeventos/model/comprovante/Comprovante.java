@@ -3,6 +3,8 @@ package br.com.sge.sistemagestaoeventos.model.comprovante;
 import br.com.sge.sistemagestaoeventos.enums.TipoComprovante;
 import lombok.Getter;
 
+import java.util.Optional;
+
 @Getter
 public class Comprovante {
     private final String inscricaoId;
@@ -13,5 +15,8 @@ public class Comprovante {
         this.inscricaoId = inscricaoId;
         this.tipo = tipo;
         this.conteudo = conteudo;
+    }
+    public Optional<String> obterPayloadQrCode() {
+        return Optional.empty();
     }
 }
