@@ -6,6 +6,8 @@ import br.com.sge.sistemagestaoeventos.model.Participante;
 import br.com.sge.sistemagestaoeventos.repository.ParticipanteRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -49,6 +51,7 @@ public class ParticipanteService {
     private void validarDadosDoParticipante(Participante participante) {
         validarNome(participante.getNome());
         validarEmail(participante.getEmail());
+        validarDataNascimento(participante.getDataNascimento());
     }
 
     private void validarNome(String nome) {
@@ -82,6 +85,16 @@ public class ParticipanteService {
 
         if (emailPertenceAOutroParticipante) {
             throw new RegraNegocioException("Já existe um participante cadastrado com este e-mail.");
+        }
+    }
+
+    private void validarDataNascimento(LocalDate dataNascimento) {
+        if (dataNascimento == null) {
+            throw new RegraNegocioException("A data de nascimento do participante é obrigatória.");
+        }
+
+        if (dataNascimento.isAfter(LocalDate.now(Clock.systemDefaultZone()))) {
+            throw new RegraNegocioException("A data de nascimento não pode ser uma data futura.");
         }
     }
 }
