@@ -6,7 +6,12 @@ import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.Participante;
 import br.com.sge.sistemagestaoeventos.model.comprovante.Comprovante;
+import br.com.sge.sistemagestaoeventos.model.comprovante.ComprovanteDigital;
 import br.com.sge.sistemagestaoeventos.model.comprovante.EmissorComprovante;
+import br.com.sge.sistemagestaoeventos.model.comprovante.EmissorComprovanteDigital;
+import br.com.sge.sistemagestaoeventos.model.comprovante.EmissorComprovanteSimples;
+import br.com.sge.sistemagestaoeventos.model.comprovante.EscritorArquivoEmDisco;
+import br.com.sge.sistemagestaoeventos.model.comprovante.GeradorHashInscricaoSha256;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeComRestricaoDeIdade;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
@@ -20,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -200,6 +206,96 @@ class ComprovanteServiceTest {
 
         verify(emissorComprovante)
                 .emitir(inscricao, evento, participante);
+    }
+
+    @Test
+    @DisplayName("Deve emitir comprovante simples utilizando emissor real para evento aberto")
+    void deveEmitirComprovanteSimplesComEmissorReal() {
+
+        ComprovanteFactory factoryReal = new ComprovanteFactory(
+                List.of(new EmissorComprovanteSimples())
+        );
+
+        ComprovanteService serviceReal = new ComprovanteService(
+                eventoService,
+                participanteService,
+                factoryReal
+        );
+
+        Inscricao inscricao = criarInscricao();
+        Evento evento = criarEvento(new ModalidadeAberta());
+        Participante participante = criarParticipante();
+
+        when(eventoService.buscarPorId("evento-1"))
+                .thenReturn(evento);
+
+        when(participanteService.buscarPorId("participante-1"))
+                .thenReturn(participante);
+
+        Comprovante resultado = serviceReal.emitir(inscricao);
+
+        assertThat(resultado.getTipo())
+                .isEqualTo(TipoComprovante.SIMPLES);
+
+        assertThat(resultado.getConteudo())
+                .contains("COMPROVANTE DE INSCRIÇÃO")
+                .contains("Evento: Evento de Teste")
+                .contains("Participante: Maria da Silva");
+
+        assertThat(resultado.obterPayloadQrCode())
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Deve emitir comprovante digital completo utilizando emissor real para evento exclusivo")
+    void deveEmitirComprovanteDigitalComEmissorReal() {
+
+        ComprovanteFactory factoryReal = new ComprovanteFactory(
+                List.of(
+                        new EmissorComprovanteDigital(
+                                new GeradorHashInscricaoSha256(),
+                                new EscritorArquivoEmDisco(),
+                                "comprovantes"
+                        )
+                )
+        );
+
+        ComprovanteService serviceReal = new ComprovanteService(
+                eventoService,
+                participanteService,
+                factoryReal
+        );
+
+        Inscricao inscricao = criarInscricao();
+        Evento evento = criarEvento(new ModalidadeExclusivaParaAlunos());
+        Participante participante = criarParticipante();
+
+        when(eventoService.buscarPorId("evento-1"))
+                .thenReturn(evento);
+
+        when(participanteService.buscarPorId("participante-1"))
+                .thenReturn(participante);
+
+        Comprovante resultado = serviceReal.emitir(inscricao);
+
+        assertThat(resultado)
+                .isInstanceOf(ComprovanteDigital.class);
+
+        assertThat(resultado.getTipo())
+                .isEqualTo(TipoComprovante.DIGITAL_COMPLETO);
+
+        assertThat(resultado.getConteudo())
+                .contains("COMPROVANTE DIGITAL DE INSCRIÇÃO")
+                .contains("Descrição: Descrição do evento")
+                .contains("Modalidade: EXCLUSIVO_ALUNOS")
+                .contains("Código de validação (QR Code):");
+
+        assertThat(resultado.obterPayloadQrCode())
+                .isPresent()
+                .get()
+                .asString()
+                .contains("SGE-QR")
+                .contains("inscricao=" + inscricao.getId());
     }
 
     private static Inscricao criarInscricao() {

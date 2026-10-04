@@ -5,12 +5,16 @@ import br.com.sge.sistemagestaoeventos.enums.TipoComprovante;
 import br.com.sge.sistemagestaoeventos.exception.InscricaoNaoEncontradaException;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.comprovante.Comprovante;
+import br.com.sge.sistemagestaoeventos.model.comprovante.ComprovanteDigital;
+import br.com.sge.sistemagestaoeventos.model.comprovante.PayloadQrCode;
 import br.com.sge.sistemagestaoeventos.service.ComprovanteService;
+import br.com.sge.sistemagestaoeventos.service.ExportacaoComprovanteService;
 import br.com.sge.sistemagestaoeventos.service.InscricaoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,6 +31,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.mock;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
 @WebMvcTest(controllers = InscricaoController.class)
 class InscricaoControllerTest {
@@ -42,6 +48,9 @@ class InscricaoControllerTest {
 
     @MockitoBean
     private ComprovanteService comprovanteService;
+
+    @MockitoBean
+    private ExportacaoComprovanteService exportacaoComprovanteService;
 
     @Test
     @DisplayName("POST /eventos/{eventoId}/inscricoes - Deve retornar 201 com comprovante")
@@ -86,7 +95,9 @@ class InscricaoControllerTest {
                 .andExpect(jsonPath("$.comprovante.tipo")
                         .value("SIMPLES"))
                 .andExpect(jsonPath("$.comprovante.conteudo")
-                        .value("COMPROVANTE DE INSCRIÇÃO"));
+                        .value("COMPROVANTE DE INSCRIÇÃO"))
+                .andExpect(jsonPath("$.comprovante.payloadQrCode")
+                        .doesNotExist());
 
         assertThat(inscricao.getComprovante())
                 .isSameAs(comprovante);
@@ -96,6 +107,61 @@ class InscricaoControllerTest {
                         "evento-1",
                         "participante-1"
                 );
+
+        verify(comprovanteService)
+                .emitir(inscricao);
+    }
+
+    @Test
+    @DisplayName("POST /eventos/{eventoId}/inscricoes - Deve retornar 201 com comprovante digital completo")
+    void deveRealizarInscricaoComComprovanteDigital() throws Exception {
+
+        Inscricao inscricao = criarInscricao(
+                "evento-1",
+                "participante-1"
+        );
+
+        PayloadQrCode payload = new PayloadQrCode(
+                "hash-123",
+                inscricao.getId(),
+                "evento-1",
+                "participante-1"
+        );
+
+        Comprovante comprovante = new ComprovanteDigital(
+                inscricao.getId(),
+                "COMPROVANTE DIGITAL DE INSCRIÇÃO",
+                payload
+        );
+
+        InscricaoRequestDTO dto =
+                new InscricaoRequestDTO("participante-1");
+
+        when(inscricaoService.inscrever(
+                "evento-1",
+                "participante-1"
+        )).thenReturn(inscricao);
+
+        when(comprovanteService.emitir(inscricao))
+                .thenReturn(comprovante);
+
+        mockMvc.perform(
+                        post("/eventos/evento-1/inscricoes")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        objectMapper.writeValueAsString(dto)
+                                )
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.comprovante.tipo")
+                        .value("DIGITAL_COMPLETO"))
+                .andExpect(jsonPath("$.comprovante.conteudo")
+                        .value("COMPROVANTE DIGITAL DE INSCRIÇÃO"))
+                .andExpect(jsonPath("$.comprovante.payloadQrCode")
+                        .value(payload.toString()));
+
+        assertThat(inscricao.getComprovante())
+                .isSameAs(comprovante);
 
         verify(comprovanteService)
                 .emitir(inscricao);
@@ -258,6 +324,37 @@ class InscricaoControllerTest {
                 );
 
         verifyNoInteractions(comprovanteService);
+    }
+    @Test
+    @DisplayName("GET /eventos/{eventoId}/inscricoes/{participanteId}/comprovante/download - Deve retornar arquivo")
+    void deveBaixarComprovante() throws Exception {
+
+        Resource resource = mock(Resource.class);
+
+        when(resource.getFilename())
+                .thenReturn("comprovante-inscricao-1.txt");
+
+        when(exportacaoComprovanteService.exportar(
+                "evento-1",
+                "participante-1"
+        )).thenReturn(resource);
+
+        mockMvc.perform(
+                        get("/eventos/evento-1/inscricoes/participante-1/comprovante/download")
+                )
+                .andExpect(status().isOk())
+                .andExpect(
+                        header().string(
+                                "Content-Disposition",
+                                "attachment; filename=\"comprovante-inscricao-1.txt\""
+                        )
+                );
+
+        verify(exportacaoComprovanteService)
+                .exportar(
+                        "evento-1",
+                        "participante-1"
+                );
     }
 
     private static Inscricao criarInscricao(

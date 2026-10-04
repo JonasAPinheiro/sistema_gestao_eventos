@@ -1,9 +1,7 @@
 package br.com.sge.sistemagestaoeventos.factory.comprovante;
 
 import br.com.sge.sistemagestaoeventos.enums.TipoComprovante;
-import br.com.sge.sistemagestaoeventos.model.comprovante.EmissorComprovante;
-import br.com.sge.sistemagestaoeventos.model.comprovante.EmissorComprovanteDigital;
-import br.com.sge.sistemagestaoeventos.model.comprovante.EmissorComprovanteSimples;
+import br.com.sge.sistemagestaoeventos.model.comprovante.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +16,7 @@ class ComprovanteFactoryTest {
             new ComprovanteFactory(
                     List.of(
                             new EmissorComprovanteSimples(),
-                            new EmissorComprovanteDigital()
+                            new EmissorComprovanteDigital(new GeradorHashInscricaoSha256(),new EscritorArquivoEmDisco(),"comprovantes")
                     )
             );
 
@@ -47,6 +45,26 @@ class ComprovanteFactoryTest {
                 .isInstanceOf(EmissorComprovanteDigital.class);
 
         assertThat(emissor.getTipo())
+                .isEqualTo(TipoComprovante.DIGITAL_COMPLETO);
+    }
+
+    @Test
+    @DisplayName("Deve disponibilizar estratégias distintas para cada formato de comprovante")
+    void deveDisponibilizarEstrategiasDistintasParaCadaFormato() {
+
+        EmissorComprovante emissorSimples =
+                factory.obterEmissor(TipoComprovante.SIMPLES);
+
+        EmissorComprovante emissorDigital =
+                factory.obterEmissor(TipoComprovante.DIGITAL_COMPLETO);
+
+        assertThat(emissorSimples)
+                .isNotSameAs(emissorDigital);
+
+        assertThat(emissorSimples.getTipo())
+                .isEqualTo(TipoComprovante.SIMPLES);
+
+        assertThat(emissorDigital.getTipo())
                 .isEqualTo(TipoComprovante.DIGITAL_COMPLETO);
     }
 
