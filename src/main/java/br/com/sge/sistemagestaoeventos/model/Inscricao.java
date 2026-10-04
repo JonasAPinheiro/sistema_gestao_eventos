@@ -14,10 +14,12 @@ public class Inscricao {
     private final String id;
     private final String eventoId;
     private final String participanteId;
+    private String motivoCancelamento;
     private final LocalDateTime criadoEm;
     private StatusInscricao status;
     @Setter
     private Comprovante comprovante;
+
 
     public Inscricao(String eventoId, String participanteId) {
         this.id = UUID.randomUUID().toString();
@@ -27,7 +29,8 @@ public class Inscricao {
         this.status = StatusInscricao.CONFIRMADA;
     }
 
-    public void cancelar() {
+    public void cancelar(String motivo) {
         this.status = StatusInscricao.CANCELADA;
+        this.motivoCancelamento = motivo;
     }
 }

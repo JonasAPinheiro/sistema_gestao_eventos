@@ -31,10 +31,6 @@ public class InscricaoService {
         Evento evento = eventoService.buscarPorId(eventoId);
         Participante participante = participanteService.buscarPorId(participanteId);
 
-        if (participante == null) {
-            throw new RegraNegocioException("O participante deve estar cadastrado para realizar a inscrição.");
-        }
-
         if (evento.getStatus() == StatusEvento.CANCELADO) {
             throw new RegraNegocioException("Não é possível realizar inscrição em um evento cancelado.");
         }
@@ -62,14 +58,18 @@ public class InscricaoService {
         return inscricaoRepository.salvar(new Inscricao(eventoId, participanteId));
     }
 
-    public void cancelar(String eventoId, String participanteId) {
-        eventoService.buscarPorId(eventoId);
+    public void cancelar(String eventoId, String participanteId, String motivo) {
+        Evento evento = eventoService.buscarPorId(eventoId);
         participanteService.buscarPorId(participanteId);
 
         Inscricao inscricao = inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante(eventoId, participanteId)
                 .orElseThrow(() -> new InscricaoNaoEncontradaException(eventoId, participanteId));
 
-        inscricao.cancelar();
+        LocalDateTime inicioEvento = LocalDateTime.of(evento.getData(), evento.getHoraInicio());
+
+        evento.getModalidade().validarCancelamento(inicioEvento, LocalDateTime.now(Clock.systemDefaultZone()), motivo);
+
+        inscricao.cancelar(motivo);
         inscricaoRepository.salvar(inscricao);
     }
 

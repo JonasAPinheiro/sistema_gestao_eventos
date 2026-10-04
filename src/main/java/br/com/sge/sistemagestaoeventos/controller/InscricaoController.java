@@ -35,8 +35,8 @@ public class InscricaoController {
 
     @DeleteMapping("/eventos/{eventoId}/inscricoes/{participanteId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancelar(@PathVariable String eventoId, @PathVariable String participanteId) {
-        inscricaoService.cancelar(eventoId, participanteId);
+    public void cancelar(@PathVariable String eventoId, @PathVariable String participanteId, @RequestParam(required = false) String motivo) {
+        inscricaoService.cancelar(eventoId, participanteId, motivo);
     }
 
     @GetMapping("/eventos/{eventoId}/inscricoes")
