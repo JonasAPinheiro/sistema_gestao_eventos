@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -161,7 +162,6 @@ class ParticipanteServiceTest {
     @Nested
     @DisplayName("Testes de Validação")
     class Validacoes {
-
         @Test
         @DisplayName("Deve lançar exceção quando nome não for informado")
         void deveValidarNomeObrigatorio() {
@@ -259,9 +259,85 @@ class ParticipanteServiceTest {
             assertThat(participante.getEmail()).isEqualTo("maria@email.com");
             verify(participanteRepository, never()).salvar(any(Participante.class));
         }
+
+        @Test
+        @DisplayName("Deve inativar matrícula")
+        void deveInativarMatricula() {
+            Participante participante = criarParticipante(
+                    "Maria Silva",
+                    "maria@email.com"
+            );
+
+            participante.inativarMatricula();
+
+            assertThat(participante.isMatriculaAtiva())
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("Deve ativar matrícula")
+        void deveAtivarMatricula() {
+            Participante participante = criarParticipante(
+                    "Maria Silva",
+                    "maria@email.com"
+            );
+
+            participante.inativarMatricula();
+            participante.ativarMatricula();
+
+            assertThat(participante.isMatriculaAtiva())
+                    .isTrue();
+        }
+        @Test
+        @DisplayName("Não deve ativar matrícula quando ela não estiver informada")
+        void naoDeveAtivarMatriculaSemNumero() {
+            Participante participante = new Participante(
+                    null,
+                    "Maria Silva",
+                    "maria@email.com",
+                    LocalDate.of(1995, 1, 1)
+            );
+
+            assertThatThrownBy(participante::ativarMatricula)
+                    .isInstanceOf(RegraNegocioException.class)
+                    .hasMessage("Não é possível ativar uma matrícula não informada.");
+        }
+        @Test
+        @DisplayName("Deve lançar exceção quando data de nascimento não for informada")
+        void deveValidarDataNascimentoObrigatoria() {
+            Participante participante = new Participante(
+                    "12345",
+                    "Maria Silva",
+                    "maria@email.com",
+                    null
+            );
+
+            assertThatThrownBy(() -> participanteService.cadastrar(participante))
+                    .isInstanceOf(RegraNegocioException.class)
+                    .hasMessage("A data de nascimento do participante é obrigatória.");
+
+            verify(participanteRepository, never()).salvar(any(Participante.class));
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando data de nascimento for futura")
+        void deveValidarDataNascimentoFutura() {
+            Participante participante = new Participante(
+                    "12345",
+                    "Maria Silva",
+                    "maria@email.com",
+                    LocalDate.now().plusDays(1)
+            );
+
+            assertThatThrownBy(() -> participanteService.cadastrar(participante))
+                    .isInstanceOf(RegraNegocioException.class)
+                    .hasMessage("A data de nascimento não pode ser uma data futura.");
+
+            verify(participanteRepository, never()).salvar(any(Participante.class));
+        }
     }
 
     private static Participante criarParticipante(String nome, String email) {
-        return new Participante(nome, email);
+        return new Participante("12345", nome, email, LocalDate.of(1995, 1, 1));
     }
 }

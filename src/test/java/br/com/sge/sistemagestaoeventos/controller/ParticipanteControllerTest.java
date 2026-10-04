@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -96,7 +97,7 @@ class ParticipanteControllerTest {
     @DisplayName("POST /participantes - Deve retornar 201 Created ao cadastrar participante")
     void deveCadastrarParticipante() throws Exception {
         Participante participanteCriado = criarParticipante("Maria Silva", "maria@email.com");
-        ParticipanteRequestDTO dto = new ParticipanteRequestDTO("Maria Silva", "maria@email.com");
+        ParticipanteRequestDTO dto = criarDto("Maria Silva", "maria@email.com");
 
         when(participanteService.cadastrar(any(Participante.class)))
                 .thenReturn(participanteCriado);
@@ -118,7 +119,7 @@ class ParticipanteControllerTest {
     @DisplayName("PUT /participantes/{id} - Deve retornar status 200 ao atualizar participante")
     void deveAtualizarParticipante() throws Exception {
         Participante participanteAtualizado = criarParticipante("Maria Souza", "maria.souza@email.com");
-        ParticipanteRequestDTO dto = new ParticipanteRequestDTO("Maria Souza", "maria.souza@email.com");
+        ParticipanteRequestDTO dto = criarDto("Maria Souza", "maria.souza@email.com");
 
         when(participanteService.atualizar(eq("1"), any(Participante.class)))
                 .thenReturn(participanteAtualizado);
@@ -138,7 +139,7 @@ class ParticipanteControllerTest {
     @Test
     @DisplayName("POST /participantes - Deve retornar 400 quando o e-mail já estiver cadastrado")
     void deveRetornar400QuandoEmailJaEstiverCadastrado() throws Exception {
-        ParticipanteRequestDTO dto = new ParticipanteRequestDTO("Maria Silva", "maria@email.com");
+        ParticipanteRequestDTO dto = criarDto("Maria Silva", "maria@email.com");
 
         when(participanteService.cadastrar(any(Participante.class)))
                 .thenThrow(new RegraNegocioException("Já existe um participante cadastrado com este e-mail."));
@@ -156,6 +157,10 @@ class ParticipanteControllerTest {
     }
 
     private static Participante criarParticipante(String nome, String email) {
-        return new Participante(nome, email);
+        return new Participante("12345", nome, email, LocalDate.of(1995, 1, 1));
+    }
+
+    private static ParticipanteRequestDTO criarDto(String nome, String email) {
+        return new ParticipanteRequestDTO(nome, email, "12345", LocalDate.of(1995, 1, 1));
     }
 }

@@ -226,8 +226,10 @@ class ComprovanteServiceTest {
 
     private static Participante criarParticipante() {
         return new Participante(
+                "12345",
                 "Maria da Silva",
-                "maria@email.com"
+                "maria@email.com",
+                LocalDate.of(1995, 1, 1)
         );
     }
 }
