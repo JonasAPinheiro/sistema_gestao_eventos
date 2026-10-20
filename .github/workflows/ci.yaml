@@ -1,23 +1,41 @@
-name: CI
+name: CI & SonarQube Cloud Analysis
 
 on:
   push:
+    branches: [ "main", "develop" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
   qualidade:
+    name: Build e Análise de Qualidade
     runs-on: ubuntu-latest
+
     steps:
-      - name: Baixar codigo
+      - name: Baixar código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
 
       - name: Configurar Java
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: "temurin"
+          distribution: 'temurin'
+          cache: maven 
 
-      - name: Executar a limpeza do maven
-        run: mvn clean
-      - name: Executar testes
-        run: mvn test
+      - name: Cache de Pacotes do SonarQube
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Executar Testes e Análise do SonarQube Cloud
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=JonasAPinheiro_sistema_gestao_eventos \
+            -Dsonar.organization=jonasapinheiro
