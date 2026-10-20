@@ -2,6 +2,9 @@ package br.com.sge.sistemagestaoeventos.model.modalidade;
 
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDateTime;
 
@@ -45,14 +48,15 @@ class PoliticaCancelamentoModalidadeTest {
         ).isInstanceOf(RegraNegocioException.class);
     }
 
-    @Test
-    void modalidadeComRestricaoDeIdadeExigeMotivo() {
-        ModalidadeComRestricaoDeIdade modalidade = new ModalidadeComRestricaoDeIdade(18);
-
-        LocalDateTime momentoCancelamento = INICIO_EVENTO.plusDays(1);
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   "})
+    void modalidadeComRestricaoDeIdadeExigeMotivo(String motivo) {
+        ModalidadeComRestricaoDeIdade modalidade =
+                new ModalidadeComRestricaoDeIdade(18);
 
         assertThatThrownBy(() ->
-                modalidade.validarCancelamento(INICIO_EVENTO, momentoCancelamento, "   ")
+                validarCancelamentoComMotivo(modalidade, motivo)
         )
                 .isInstanceOf(RegraNegocioException.class)
                 .hasMessage("O motivo do cancelamento é obrigatório.");
@@ -65,5 +69,16 @@ class PoliticaCancelamentoModalidadeTest {
         assertThatCode(() -> modalidade.validarCancelamento(
                 INICIO_EVENTO, INICIO_EVENTO.plusDays(1), "Solicitação do participante"
         )).doesNotThrowAnyException();
+    }
+
+    private void validarCancelamentoComMotivo(
+            ModalidadeComRestricaoDeIdade modalidade,
+            String motivo) {
+
+        modalidade.validarCancelamento(
+                INICIO_EVENTO,
+                INICIO_EVENTO.plusDays(1),
+                motivo
+        );
     }
 }
