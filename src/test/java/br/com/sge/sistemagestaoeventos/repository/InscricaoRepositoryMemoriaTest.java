@@ -41,7 +41,7 @@ class InscricaoRepositoryMemoriaTest {
         repository.salvar(inscricao);
 
         assertThat(repository.listarPorEvento("evento-1")).hasSize(1);
-        assertThat(repository.listarPorEvento("evento-1").get(0).getStatus())
+        assertThat(repository.listarPorEvento("evento-1").getFirst().getStatus())
                 .isEqualTo(StatusInscricao.CANCELADA);
     }
 
