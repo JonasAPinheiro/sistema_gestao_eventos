@@ -13,7 +13,7 @@ public class CarregadorRecursoDisco implements CarregadorRecurso {
     @Override
     public Resource carregar(Path caminho) {
         try {
-            Resource resource = new UrlResource(caminho.toUri());
+            Resource resource = criarResource(caminho);
             if (!resource.exists() || !resource.isReadable()) {
                 throw new IllegalStateException("O arquivo não está acessível para leitura no disco.");
             }
@@ -21,5 +21,9 @@ public class CarregadorRecursoDisco implements CarregadorRecurso {
         } catch (MalformedURLException e) {
             throw new IllegalStateException("Erro interno ao processar o caminho do arquivo.", e);
         }
+    }
+
+    protected Resource criarResource(Path caminho) throws MalformedURLException {
+        return new UrlResource(caminho.toUri());
     }
 }

@@ -56,4 +56,25 @@ class CarregadorRecursoDiscoTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Erro interno ao processar o caminho do arquivo.");
     }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando o recurso existe mas não é legível")
+    void deveLancarExcecaoQuandoRecursoNaoForLegivel() {
+        Resource resourceMock = mock(Resource.class);
+        when(resourceMock.exists()).thenReturn(true);
+        when(resourceMock.isReadable()).thenReturn(false);
+
+        CarregadorRecursoDisco carregadorComMock = new CarregadorRecursoDisco() {
+            @Override
+            protected Resource criarResource(Path caminho) {
+                return resourceMock;
+            }
+        };
+
+        Path caminho = Path.of("qualquer.txt");
+
+        assertThatThrownBy(() -> carregadorComMock.carregar(caminho))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("O arquivo não está acessível para leitura no disco.");
+    }
 }
