@@ -302,6 +302,21 @@ class ParticipanteServiceTest {
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("Não é possível ativar uma matrícula não informada.");
         }
+
+        @Test
+        @DisplayName("Não deve ativar matrícula quando ela estiver em branco")
+        void naoDeveAtivarMatriculaEmBranco() {
+            Participante participante = new Participante(
+                    "   ",
+                    "Maria Silva",
+                    "maria@email.com",
+                    LocalDate.of(1995, 1, 1)
+            );
+
+            assertThatThrownBy(participante::ativarMatricula)
+                    .isInstanceOf(RegraNegocioException.class)
+                    .hasMessage("Não é possível ativar uma matrícula não informada.");
+        }
         @Test
         @DisplayName("Deve lançar exceção quando data de nascimento não for informada")
         void deveValidarDataNascimentoObrigatoria() {
