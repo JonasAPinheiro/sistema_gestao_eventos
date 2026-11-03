@@ -1,12 +1,12 @@
 # Etapa 1: Build da aplicação com Maven
-FROM maven:3.9.6-eclipse-temurin-17 AS builder
+FROM maven:4.0.0-rc-7-amazoncorretto-21 AS builder
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Etapa 2: Imagem final leve para execução
-FROM eclipse-temurin:17-jre-alpine
+FROM alpine/java:21-jre
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
