@@ -39,3 +39,15 @@ jobs:
           mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.projectKey=JonasAPinheiro_sistema_gestao_eventos \
             -Dsonar.organization=jonasapinheiro
+  deploy:
+    name: Continuous Deployment (Render)
+    needs: qualidade
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Disparar Deploy no Render via Webhook
+        env:
+          RENDER_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl -X POST "$RENDER_HOOK"
