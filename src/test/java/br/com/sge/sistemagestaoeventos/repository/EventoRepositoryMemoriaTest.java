@@ -1,6 +1,7 @@
 package br.com.sge.sistemagestaoeventos.repository;
 
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,14 +24,19 @@ class EventoRepositoryMemoriaTest {
 
     private Evento criarEvento() {
         return new Evento(
-                "Java Day",
-                "Evento sobre Java",
-                LocalDate.now(),
-                LocalTime.of(19, 0),
-                LocalTime.of(22, 0),
-                "Auditório",
-                100,
-                new ModalidadeAberta()
+                new EventoDados(
+
+                        "Java Day",
+                        "Evento sobre Java",
+                        LocalDate.now(),
+                        LocalTime.of(19, 0),
+                        LocalTime.of(22, 0),
+                        "Auditório",
+                        100,
+                        new ModalidadeAberta(),
+                        null,
+                        null
+                )
         );
     }
 

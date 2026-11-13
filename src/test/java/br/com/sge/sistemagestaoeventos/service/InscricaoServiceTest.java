@@ -1,9 +1,11 @@
 package br.com.sge.sistemagestaoeventos.service;
 
 import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
+import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.exception.InscricaoNaoEncontradaException;
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import br.com.sge.sistemagestaoeventos.model.Participante;
@@ -19,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +41,9 @@ class InscricaoServiceTest {
 
     @Mock
     private ParticipanteService participanteService;
+
+    @Mock
+    private CalculadoraValorInscricao calculadoraValor;
 
     @InjectMocks
     private InscricaoService inscricaoService;
@@ -119,19 +125,22 @@ class InscricaoServiceTest {
         @Test
         @DisplayName("Deve realizar inscrição válida")
         void deveRealizarInscricaoValida() {
-            prepararEventoEParticipanteExistentes();
+            Evento evento = prepararEventoEParticipanteExistentes();
             when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.empty());
             when(inscricaoRepository.contarConfirmadasPorEvento("evento-1")).thenReturn(0L);
             when(inscricaoRepository.salvar(any(Inscricao.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
+            when(calculadoraValor.calcular(any(Evento.class))).thenReturn(new BigDecimal("90.00"));
 
             Inscricao resultado = inscricaoService.inscrever("evento-1", "participante-1");
 
             assertThat(resultado.getEventoId()).isEqualTo("evento-1");
             assertThat(resultado.getParticipanteId()).isEqualTo("participante-1");
             assertThat(resultado.getStatus()).isEqualTo(StatusInscricao.CONFIRMADA);
+            assertThat(resultado.getValorFinal()).isEqualByComparingTo("90.00");
             verify(inscricaoRepository).salvar(any(Inscricao.class));
+            verify(calculadoraValor).calcular(evento);
         }
 
         @Test
@@ -230,14 +239,18 @@ class InscricaoServiceTest {
         @DisplayName("Deve realizar inscrição quando participante atende à elegibilidade da modalidade")
         void deveRealizarInscricaoComElegibilidadeValida() {
             Evento evento = new Evento(
-                    "Evento Exclusivo",
-                    "Descrição do evento",
-                    LocalDate.now().plusDays(1),
-                    LocalTime.of(18, 0),
-                    LocalTime.of(20, 0),
-                    "Centro de Eventos",
-                    100,
-                    new ModalidadeExclusivaParaAlunos()
+                    new EventoDados(
+                            "Evento Exclusivo",
+                            "Descrição do evento",
+                            LocalDate.now().plusDays(1),
+                            LocalTime.of(18, 0),
+                            LocalTime.of(20, 0),
+                            "Centro de Eventos",
+                            100,
+                            new ModalidadeExclusivaParaAlunos(),
+                            null,
+                            null
+                    )
             );
 
             Participante participante = criarParticipante();
@@ -252,6 +265,7 @@ class InscricaoServiceTest {
                     .thenReturn(0L);
             when(inscricaoRepository.salvar(any(Inscricao.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
+            when(calculadoraValor.calcular(evento)).thenReturn(BigDecimal.ZERO);
 
             Inscricao resultado =
                     inscricaoService.inscrever("evento-1", "participante-1");
@@ -264,19 +278,45 @@ class InscricaoServiceTest {
         }
     }
 
-    private void prepararEventoEParticipanteExistentes() {
-        when(eventoService.buscarPorId("evento-1")).thenReturn(criarEventoFuturo(100));
+    private Evento prepararEventoEParticipanteExistentes() {
+        Evento evento = criarEventoFuturo(100);
+        when(eventoService.buscarPorId("evento-1")).thenReturn(evento);
         when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
+        return evento;
     }
 
     private static Evento criarEventoFuturo(int capacidadeMaxima) {
-        return new Evento("Evento de Teste", "Descrição do evento", LocalDate.now().plusDays(1),
-                LocalTime.of(18, 0), LocalTime.of(20, 0), "Centro de Eventos", capacidadeMaxima, new ModalidadeAberta());
+        return new Evento(
+                new EventoDados(
+                        "Evento de Teste",
+                        "Descrição do evento",
+                        LocalDate.now().plusDays(10),
+                        LocalTime.of(18, 0),
+                        LocalTime.of(20, 0),
+                        "Centro de Eventos",
+                        capacidadeMaxima,
+                        new ModalidadeAberta(),
+                        BigDecimal.ZERO,
+                        TipoLote.LOTE_2
+                )
+        );
     }
 
     private static Evento criarEventoPassado(int capacidadeMaxima) {
-        return new Evento("Evento de Teste", "Descrição do evento", LocalDate.now().minusDays(1),
-                LocalTime.of(18, 0), LocalTime.of(20, 0), "Centro de Eventos", capacidadeMaxima, new ModalidadeAberta());
+        return new Evento(
+                new EventoDados(
+                        "Evento de Teste",
+                        "Descrição do evento",
+                        LocalDate.now().minusDays(1),
+                        LocalTime.of(18, 0),
+                        LocalTime.of(20, 0),
+                        "Centro de Eventos",
+                        capacidadeMaxima,
+                        new ModalidadeAberta(),
+                        BigDecimal.ZERO,
+                        TipoLote.LOTE_2
+                )
+        );
     }
 
     private static Participante criarParticipante() {
@@ -284,6 +324,6 @@ class InscricaoServiceTest {
     }
 
     private static Inscricao criarInscricao(String eventoId, String participanteId) {
-        return new Inscricao(eventoId, participanteId);
+        return new Inscricao(eventoId, participanteId, BigDecimal.ZERO);
     }
 }

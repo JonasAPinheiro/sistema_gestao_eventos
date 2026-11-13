@@ -1,8 +1,10 @@
 package br.com.sge.sistemagestaoeventos.service;
 
 import br.com.sge.sistemagestaoeventos.enums.TipoComprovante;
+import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.factory.comprovante.ComprovanteFactory;
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.Participante;
 import br.com.sge.sistemagestaoeventos.model.comprovante.Comprovante;
@@ -23,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -301,7 +304,8 @@ class ComprovanteServiceTest {
     private static Inscricao criarInscricao() {
         return new Inscricao(
                 "evento-1",
-                "participante-1"
+                "participante-1",
+                java.math.BigDecimal.ZERO
         );
     }
 
@@ -309,14 +313,18 @@ class ComprovanteServiceTest {
             ModalidadeEvento modalidade
     ) {
         return new Evento(
-                "Evento de Teste",
-                "Descrição do evento",
-                LocalDate.now().plusDays(10),
-                LocalTime.of(18, 0),
-                LocalTime.of(20, 0),
-                "Centro de Eventos",
-                100,
-                modalidade
+                new EventoDados(
+                        "Evento de Teste",
+                        "Descrição do evento",
+                        LocalDate.now().plusDays(10),
+                        LocalTime.of(18, 0),
+                        LocalTime.of(20, 0),
+                        "Centro de Eventos",
+                        100,
+                        modalidade,
+                        BigDecimal.ZERO,
+                        TipoLote.LOTE_2
+                )
         );
     }
 

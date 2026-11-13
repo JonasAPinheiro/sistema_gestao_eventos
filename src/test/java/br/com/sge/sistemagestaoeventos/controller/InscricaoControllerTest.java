@@ -363,7 +363,8 @@ class InscricaoControllerTest {
     ) {
         return new Inscricao(
                 eventoId,
-                participanteId
+                participanteId,
+                java.math.BigDecimal.ZERO
         );
     }
 

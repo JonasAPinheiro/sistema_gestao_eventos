@@ -1,10 +1,12 @@
 package br.com.sge.sistemagestaoeventos.service;
 
 import br.com.sge.sistemagestaoeventos.dto.EventoRequestDTO;
+import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.exception.EventoNaoEncontradoException;
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
 import br.com.sge.sistemagestaoeventos.factory.modalidade.ModalidadeEventoFactory;
@@ -19,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -127,7 +130,9 @@ class EventoServiceTest {
                     "Novo Local",
                     200,
                     TipoModalidade.RESTRICAO_IDADE,
-                    18
+                    18,
+                    new BigDecimal("150.00"),
+                    br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_1
             );
 
             when(eventoRepository.buscarPorId("1"))
@@ -152,6 +157,8 @@ class EventoServiceTest {
                     .isEqualTo(dadosAtualizados.local());
             assertThat(resultado.getCapacidadeMaxima())
                     .isEqualTo(dadosAtualizados.capacidadeMaxima());
+            assertThat(resultado.getValorBase()).isEqualByComparingTo("150.00");
+            assertThat(resultado.getLoteAtivo()).isEqualTo(br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_1);
             assertThat(resultado.getModalidade())
                     .isSameAs(modalidadeOriginal);
 
@@ -364,6 +371,30 @@ class EventoServiceTest {
 
             verify(eventoRepository, never()).salvar(any(Evento.class));
         }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando valor base for negativo")
+        void deveRejeitarValorBaseNegativo() {
+            EventoRequestDTO dto = criarDto("Evento Válido", "Descrição do evento", LocalDate.now().plusDays(10),
+                    LocalTime.of(18, 0), LocalTime.of(20, 0), "Centro de Eventos", 100,
+                    TipoModalidade.ABERTO, null, new BigDecimal("-1.00"), null);
+
+            assertThatThrownBy(() -> eventoService.cadastrar(dto))
+                    .isInstanceOf(RegraNegocioException.class)
+                    .hasMessage("O valor base do evento não pode ser negativo.");
+        }
+
+        @Test
+        @DisplayName("Deve aplicar valores padrão quando não forem informados")
+        void deveAplicarValoresPadrao() {
+            EventoRequestDTO dto = criarDto("Evento Válido");
+            when(eventoRepository.salvar(any(Evento.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            Evento resultado = eventoService.cadastrar(dto);
+
+            assertThat(resultado.getValorBase()).isEqualByComparingTo("0.00");
+            assertThat(resultado.getLoteAtivo()).isEqualTo(br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_2);
+        }
     }
 
     private static Evento criarEvento(String titulo) {
@@ -372,14 +403,18 @@ class EventoServiceTest {
 
     private static Evento criarEvento(String titulo, ModalidadeEvento modalidade) {
         return new Evento(
-                titulo,
-                "Descrição do evento",
-                LocalDate.now().plusDays(10),
-                LocalTime.of(18, 0),
-                LocalTime.of(20, 0),
-                "Centro de Eventos",
-                100,
-                modalidade
+                new EventoDados(
+                        titulo,
+                        "Descrição do evento",
+                        LocalDate.now().plusDays(10),
+                        LocalTime.of(18, 0),
+                        LocalTime.of(20, 0),
+                        "Centro de Eventos",
+                        100,
+                        modalidade,
+                        BigDecimal.ZERO,
+                        TipoLote.LOTE_2
+                )
         );
     }
 
@@ -393,6 +428,8 @@ class EventoServiceTest {
                 "Centro de Eventos",
                 100,
                 TipoModalidade.ABERTO,
+                null,
+                null,
                 null
         );
     }
@@ -408,6 +445,23 @@ class EventoServiceTest {
             TipoModalidade tipoModalidade,
             Integer idadeMinima
     ) {
+        return criarDto(titulo, descricao, data, horaInicio, horaFim, local, capacidadeMaxima, tipoModalidade, idadeMinima,
+                null, null);
+    }
+
+    private static EventoRequestDTO criarDto(
+            String titulo,
+            String descricao,
+            LocalDate data,
+            LocalTime horaInicio,
+            LocalTime horaFim,
+            String local,
+            int capacidadeMaxima,
+            TipoModalidade tipoModalidade,
+            Integer idadeMinima,
+            BigDecimal valorBase,
+            br.com.sge.sistemagestaoeventos.enums.TipoLote loteAtivo
+    ) {
         return new EventoRequestDTO(
                 titulo,
                 descricao,
@@ -417,7 +471,9 @@ class EventoServiceTest {
                 local,
                 capacidadeMaxima,
                 tipoModalidade,
-                idadeMinima
+                idadeMinima,
+                valorBase,
+                loteAtivo
         );
     }
 }

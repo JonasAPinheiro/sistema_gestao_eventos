@@ -4,6 +4,7 @@ import br.com.sge.sistemagestaoeventos.dto.EventoRequestDTO;
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.exception.EventoNaoEncontradoException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import br.com.sge.sistemagestaoeventos.service.EventoService;
 import br.com.sge.sistemagestaoeventos.service.InscricaoService;
@@ -213,14 +214,18 @@ class EventoControllerTest {
 
     private static Evento criarEvento(String titulo) {
         return new Evento(
-                titulo,
-                "Descrição do evento",
-                LocalDate.now().plusDays(10),
-                LocalTime.of(18, 0),
-                LocalTime.of(20, 0),
-                "Centro de Eventos",
-                100,
-                new ModalidadeAberta()
+                new EventoDados(
+                        titulo,
+                        "Descrição do evento",
+                        LocalDate.now().plusDays(10),
+                        LocalTime.of(18, 0),
+                        LocalTime.of(20, 0),
+                        "Centro de Eventos",
+                        100,
+                        new ModalidadeAberta(),
+                        null,
+                        null
+                )
         );
     }
 
@@ -240,7 +245,9 @@ class EventoControllerTest {
                 "Centro de Eventos",
                 capacidadeMaxima,
                 tipoModalidade,
-                idadeMinima
+                idadeMinima,
+                null,
+                null
         );
     }
 }
