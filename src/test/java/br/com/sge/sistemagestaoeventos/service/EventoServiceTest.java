@@ -168,6 +168,26 @@ class EventoServiceTest {
         }
 
         @Test
+        @DisplayName("Deve aplicar valores padrão ao atualizar quando valor base e lote não forem informados")
+        void deveAplicarValoresPadraoAoAtualizar() {
+            Evento existente = criarEvento("Evento Antigo", new ModalidadeAberta());
+            existente.setValorBase(new BigDecimal("150.00"));
+            existente.setLoteAtivo(br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_1);
+
+            EventoRequestDTO dto = criarDto("Evento Atualizado");
+
+            when(eventoRepository.buscarPorId("1")).thenReturn(Optional.of(existente));
+            when(eventoRepository.salvar(any(Evento.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            Evento resultado = eventoService.atualizar("1", dto);
+
+            assertThat(resultado.getValorBase()).isEqualByComparingTo("0.00");
+            assertThat(resultado.getLoteAtivo())
+                    .isEqualTo(br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_2);
+        }
+
+        @Test
         @DisplayName("Deve cancelar evento existente")
         void deveCancelarEvento() {
             Evento evento = criarEvento("Evento para Cancelar");
