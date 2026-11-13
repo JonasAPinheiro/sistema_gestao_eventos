@@ -4,6 +4,7 @@ import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 public record InscricaoResponseDTO(
         String id,
@@ -12,6 +13,7 @@ public record InscricaoResponseDTO(
         StatusInscricao status,
         String motivoCancelamento,
         LocalDateTime criadoEm,
+        BigDecimal valorFinal,
         ComprovanteResponseDTO comprovante
 ) {
 
@@ -25,6 +27,7 @@ public record InscricaoResponseDTO(
                 inscricao.getStatus(),
                 inscricao.getMotivoCancelamento(),
                 inscricao.getCriadoEm(),
+                inscricao.getValorFinal(),
                 ComprovanteResponseDTO.from(inscricao.getComprovante())
         );
     }

@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -17,16 +18,18 @@ public class Inscricao {
     private String motivoCancelamento;
     private final LocalDateTime criadoEm;
     private StatusInscricao status;
+    private final BigDecimal valorFinal;
     @Setter
     private Comprovante comprovante;
 
 
-    public Inscricao(String eventoId, String participanteId) {
+    public Inscricao(String eventoId, String participanteId, BigDecimal valorFinal) {
         this.id = UUID.randomUUID().toString();
         this.eventoId = eventoId;
         this.participanteId = participanteId;
         this.criadoEm = LocalDateTime.now(Clock.systemDefaultZone());
         this.status = StatusInscricao.CONFIRMADA;
+        this.valorFinal = valorFinal;
     }
 
     public void cancelar(String motivo) {
