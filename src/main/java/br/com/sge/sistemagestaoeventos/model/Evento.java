@@ -1,6 +1,7 @@
 package br.com.sge.sistemagestaoeventos.model;
 
 import br.com.sge.sistemagestaoeventos.enums.StatusEvento;
+import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +10,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -31,19 +33,25 @@ public class Evento {
     private StatusEvento status;
     private final LocalDateTime criadoEm;
     private final ModalidadeEvento modalidade;
+    @Setter
+    private BigDecimal valorBase;
+    @Setter
+    private TipoLote loteAtivo;
 
-    public Evento(String titulo, String descricao, LocalDate data, LocalTime horaInicio, LocalTime horaFim, String local, int capacidadeMaxima, ModalidadeEvento modalidade) {
+    public Evento(EventoDados dados) {
         this.id = UUID.randomUUID().toString();
-        this.titulo = titulo;
-        this.descricao = descricao;
-        this.data = data;
-        this.horaInicio = horaInicio;
-        this.horaFim = horaFim;
-        this.local = local;
-        this.capacidadeMaxima = capacidadeMaxima;
+        this.titulo = dados.titulo();
+        this.descricao = dados.descricao();
+        this.data = dados.data();
+        this.horaInicio = dados.horaInicio();
+        this.horaFim = dados.horaFim();
+        this.local = dados.local();
+        this.capacidadeMaxima = dados.capacidadeMaxima();
         this.status = StatusEvento.ATIVO;
         this.criadoEm = LocalDateTime.now(Clock.systemDefaultZone());
-        this.modalidade = modalidade;
+        this.modalidade = dados.modalidade();
+        this.valorBase = dados.valorBase() == null ? BigDecimal.ZERO : valorBase;
+        this.loteAtivo = dados.loteAtivo() == null ? TipoLote.LOTE_2 : loteAtivo;
     }
 
     public void cancelar() {

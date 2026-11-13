@@ -61,6 +61,8 @@ public class EventoService {
         eventoExistente.setHoraFim(dto.horaFim());
         eventoExistente.setLocal(dto.local());
         eventoExistente.setCapacidadeMaxima(dto.capacidadeMaxima());
+        eventoExistente.setValorBase(dto.valorBase() == null ? java.math.BigDecimal.ZERO : dto.valorBase());
+        eventoExistente.setLoteAtivo(dto.loteAtivo() == null ? br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_2 : dto.loteAtivo());
 
         validarDadosDoEvento(eventoExistente);
 
@@ -104,6 +106,10 @@ public class EventoService {
             throw new RegraNegocioException(
                     "A capacidade máxima deve ser um número inteiro maior que zero."
             );
+        }
+
+        if (evento.getValorBase().signum() < 0) {
+            throw new RegraNegocioException("O valor base do evento não pode ser negativo.");
         }
     }
 }
