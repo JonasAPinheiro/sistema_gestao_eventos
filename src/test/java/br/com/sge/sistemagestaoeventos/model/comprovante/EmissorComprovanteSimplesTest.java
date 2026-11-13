@@ -39,7 +39,6 @@ class EmissorComprovanteSimplesTest {
                         "Auditório Central",
                         50,
                         new ModalidadeAberta(),
-                        null,
                         null
                 )
         );

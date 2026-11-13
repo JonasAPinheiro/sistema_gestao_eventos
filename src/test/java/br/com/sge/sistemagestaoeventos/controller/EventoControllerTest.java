@@ -223,7 +223,6 @@ class EventoControllerTest {
                         "Centro de Eventos",
                         100,
                         new ModalidadeAberta(),
-                        null,
                         null
                 )
         );
@@ -246,7 +245,6 @@ class EventoControllerTest {
                 capacidadeMaxima,
                 tipoModalidade,
                 idadeMinima,
-                null,
                 null
         );
     }

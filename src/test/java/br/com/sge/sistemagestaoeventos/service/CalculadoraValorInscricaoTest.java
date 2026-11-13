@@ -60,7 +60,7 @@ class CalculadoraValorInscricaoTest {
 
     private static Evento criarEvento(br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento modalidade,
                                       BigDecimal valorBase, TipoLote lote) {
-        return new Evento(
+        Evento evento = new Evento(
                 new EventoDados(
                         "Evento de Teste",
                         "Descrição do evento",
@@ -70,9 +70,10 @@ class CalculadoraValorInscricaoTest {
                         "Centro de Eventos",
                         100,
                         modalidade,
-                        valorBase,
-                        lote
+                        valorBase
                 )
         );
+        evento.setLoteAtivo(lote);
+        return evento;
     }
 }

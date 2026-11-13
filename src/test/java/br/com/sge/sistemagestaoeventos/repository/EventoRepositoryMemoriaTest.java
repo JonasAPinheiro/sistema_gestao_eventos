@@ -34,7 +34,6 @@ class EventoRepositoryMemoriaTest {
                         "Auditório",
                         100,
                         new ModalidadeAberta(),
-                        null,
                         null
                 )
         );

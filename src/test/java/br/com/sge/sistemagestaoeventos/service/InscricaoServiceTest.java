@@ -1,7 +1,6 @@
 package br.com.sge.sistemagestaoeventos.service;
 
 import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
-import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.exception.InscricaoNaoEncontradaException;
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
@@ -141,6 +140,7 @@ class InscricaoServiceTest {
             assertThat(resultado.getValorFinal()).isEqualByComparingTo("90.00");
             verify(inscricaoRepository).salvar(any(Inscricao.class));
             verify(calculadoraValor).calcular(evento);
+            verify(eventoService).avancarLoteSeNecessario(evento, 1L);
         }
 
         @Test
@@ -248,7 +248,6 @@ class InscricaoServiceTest {
                             "Centro de Eventos",
                             100,
                             new ModalidadeExclusivaParaAlunos(),
-                            null,
                             null
                     )
             );
@@ -296,8 +295,7 @@ class InscricaoServiceTest {
                         "Centro de Eventos",
                         capacidadeMaxima,
                         new ModalidadeAberta(),
-                        BigDecimal.ZERO,
-                        TipoLote.LOTE_2
+                        BigDecimal.ZERO
                 )
         );
     }
@@ -313,8 +311,7 @@ class InscricaoServiceTest {
                         "Centro de Eventos",
                         capacidadeMaxima,
                         new ModalidadeAberta(),
-                        BigDecimal.ZERO,
-                        TipoLote.LOTE_2
+                        BigDecimal.ZERO
                 )
         );
     }
