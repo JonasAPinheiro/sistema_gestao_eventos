@@ -1,6 +1,5 @@
 package br.com.sge.sistemagestaoeventos.model;
 
-import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
 
 import java.math.BigDecimal;
@@ -16,6 +15,5 @@ public record EventoDados(
         String local,
         int capacidadeMaxima,
         ModalidadeEvento modalidade,
-        BigDecimal valorBase,
-        TipoLote loteAtivo
+        BigDecimal valorBase
 ) {}

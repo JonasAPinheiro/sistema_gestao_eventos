@@ -131,8 +131,7 @@ class EventoServiceTest {
                     200,
                     TipoModalidade.RESTRICAO_IDADE,
                     18,
-                    new BigDecimal("150.00"),
-                    br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_1
+                    new BigDecimal("150.00")
             );
 
             when(eventoRepository.buscarPorId("1"))
@@ -158,7 +157,6 @@ class EventoServiceTest {
             assertThat(resultado.getCapacidadeMaxima())
                     .isEqualTo(dadosAtualizados.capacidadeMaxima());
             assertThat(resultado.getValorBase()).isEqualByComparingTo("150.00");
-            assertThat(resultado.getLoteAtivo()).isEqualTo(br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_1);
             assertThat(resultado.getModalidade())
                     .isSameAs(modalidadeOriginal);
 
@@ -168,11 +166,10 @@ class EventoServiceTest {
         }
 
         @Test
-        @DisplayName("Deve aplicar valores padrão ao atualizar quando valor base e lote não forem informados")
+        @DisplayName("Deve aplicar valor base padrão ao atualizar quando não for informado")
         void deveAplicarValoresPadraoAoAtualizar() {
             Evento existente = criarEvento("Evento Antigo", new ModalidadeAberta());
             existente.setValorBase(new BigDecimal("150.00"));
-            existente.setLoteAtivo(br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_1);
 
             EventoRequestDTO dto = criarDto("Evento Atualizado");
 
@@ -183,8 +180,43 @@ class EventoServiceTest {
             Evento resultado = eventoService.atualizar("1", dto);
 
             assertThat(resultado.getValorBase()).isEqualByComparingTo("0.00");
-            assertThat(resultado.getLoteAtivo())
-                    .isEqualTo(br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_2);
+        }
+
+        @Test
+        @DisplayName("Deve manter o lote ativo ao atualizar o evento")
+        void deveManterLoteAtivoAoAtualizar() {
+            Evento existente = criarEvento("Evento Antigo", new ModalidadeAberta());
+            existente.avancarLote(10);
+
+            when(eventoRepository.buscarPorId("1")).thenReturn(Optional.of(existente));
+            when(eventoRepository.salvar(any(Evento.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            Evento resultado = eventoService.atualizar("1", criarDto("Evento Atualizado"));
+
+            assertThat(resultado.getLoteAtivo()).isEqualTo(TipoLote.LOTE_1);
+        }
+
+        @Test
+        @DisplayName("Deve salvar o evento quando o lote avançar")
+        void deveSalvarEventoQuandoLoteAvancar() {
+            Evento evento = criarEvento("Evento Lote");
+
+            eventoService.avancarLoteSeNecessario(evento, 10);
+
+            assertThat(evento.getLoteAtivo()).isEqualTo(TipoLote.LOTE_1);
+            verify(eventoRepository).salvar(evento);
+        }
+
+        @Test
+        @DisplayName("Não deve salvar o evento quando o lote não mudar")
+        void naoDeveSalvarEventoQuandoLoteNaoMudar() {
+            Evento evento = criarEvento("Evento Lote");
+
+            eventoService.avancarLoteSeNecessario(evento, 9);
+
+            assertThat(evento.getLoteAtivo()).isEqualTo(TipoLote.PROMOCIONAL);
+            verify(eventoRepository, never()).salvar(any(Evento.class));
         }
 
         @Test
@@ -397,7 +429,7 @@ class EventoServiceTest {
         void deveRejeitarValorBaseNegativo() {
             EventoRequestDTO dto = criarDto("Evento Válido", "Descrição do evento", LocalDate.now().plusDays(10),
                     LocalTime.of(18, 0), LocalTime.of(20, 0), "Centro de Eventos", 100,
-                    TipoModalidade.ABERTO, null, new BigDecimal("-1.00"), null);
+                    TipoModalidade.ABERTO, null, new BigDecimal("-1.00"));
 
             assertThatThrownBy(() -> eventoService.cadastrar(dto))
                     .isInstanceOf(RegraNegocioException.class)
@@ -413,7 +445,7 @@ class EventoServiceTest {
             Evento resultado = eventoService.cadastrar(dto);
 
             assertThat(resultado.getValorBase()).isEqualByComparingTo("0.00");
-            assertThat(resultado.getLoteAtivo()).isEqualTo(br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_2);
+            assertThat(resultado.getLoteAtivo()).isEqualTo(TipoLote.PROMOCIONAL);
         }
     }
 
@@ -432,8 +464,7 @@ class EventoServiceTest {
                         "Centro de Eventos",
                         100,
                         modalidade,
-                        BigDecimal.ZERO,
-                        TipoLote.LOTE_2
+                        BigDecimal.ZERO
                 )
         );
     }
@@ -448,7 +479,6 @@ class EventoServiceTest {
                 "Centro de Eventos",
                 100,
                 TipoModalidade.ABERTO,
-                null,
                 null,
                 null
         );
@@ -466,7 +496,7 @@ class EventoServiceTest {
             Integer idadeMinima
     ) {
         return criarDto(titulo, descricao, data, horaInicio, horaFim, local, capacidadeMaxima, tipoModalidade, idadeMinima,
-                null, null);
+                null);
     }
 
     private static EventoRequestDTO criarDto(
@@ -479,8 +509,7 @@ class EventoServiceTest {
             int capacidadeMaxima,
             TipoModalidade tipoModalidade,
             Integer idadeMinima,
-            BigDecimal valorBase,
-            br.com.sge.sistemagestaoeventos.enums.TipoLote loteAtivo
+            BigDecimal valorBase
     ) {
         return new EventoRequestDTO(
                 titulo,
@@ -492,8 +521,7 @@ class EventoServiceTest {
                 capacidadeMaxima,
                 tipoModalidade,
                 idadeMinima,
-                valorBase,
-                loteAtivo
+                valorBase
         );
     }
 }

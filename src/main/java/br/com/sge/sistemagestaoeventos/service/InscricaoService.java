@@ -48,7 +48,8 @@ public class InscricaoService {
                     throw new RegraNegocioException("O participante já possui uma inscrição ativa neste evento.");
                 });
 
-        long vagasDisponiveis = evento.getCapacidadeMaxima() - inscricaoRepository.contarConfirmadasPorEvento(eventoId);
+        long confirmadas = inscricaoRepository.contarConfirmadasPorEvento(eventoId);
+        long vagasDisponiveis = evento.getCapacidadeMaxima() - confirmadas;
 
         if (vagasDisponiveis <= 0) {
             throw new RegraNegocioException("Não há vagas disponíveis para este evento.");
@@ -58,7 +59,10 @@ public class InscricaoService {
             validador.validarElegibilidade(participante);
         }
 
-        return inscricaoRepository.salvar(new Inscricao(eventoId, participanteId, calculadoraValor.calcular(evento)));
+        Inscricao inscricao = inscricaoRepository.salvar(
+                new Inscricao(eventoId, participanteId, calculadoraValor.calcular(evento)));
+        eventoService.avancarLoteSeNecessario(evento, confirmadas + 1);
+        return inscricao;
     }
 
     public void cancelar(String eventoId, String participanteId, String motivo) {

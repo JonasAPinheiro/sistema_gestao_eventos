@@ -76,7 +76,6 @@ class EmissorComprovanteDigitalTest {
                         "Local do evento",
                         100,
                         modalidade,
-                        null,
                         null
                 )
         );

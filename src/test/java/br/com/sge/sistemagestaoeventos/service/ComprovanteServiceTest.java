@@ -1,7 +1,6 @@
 package br.com.sge.sistemagestaoeventos.service;
 
 import br.com.sge.sistemagestaoeventos.enums.TipoComprovante;
-import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.factory.comprovante.ComprovanteFactory;
 import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.model.EventoDados;
@@ -322,8 +321,7 @@ class ComprovanteServiceTest {
                         "Centro de Eventos",
                         100,
                         modalidade,
-                        BigDecimal.ZERO,
-                        TipoLote.LOTE_2
+                        BigDecimal.ZERO
                 )
         );
     }
