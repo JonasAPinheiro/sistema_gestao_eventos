@@ -51,10 +51,19 @@ public class Evento {
         this.criadoEm = LocalDateTime.now(Clock.systemDefaultZone());
         this.modalidade = dados.modalidade();
         this.valorBase = dados.valorBase() == null ? BigDecimal.ZERO : dados.valorBase();
-        this.loteAtivo = dados.loteAtivo() == null ? TipoLote.LOTE_2 : dados.loteAtivo();
+        this.loteAtivo = TipoLote.PROMOCIONAL;
     }
 
     public void cancelar() {
         this.status = StatusEvento.CANCELADO;
+    }
+
+    public boolean avancarLote(long inscricoesConfirmadas) {
+        TipoLote proximo = TipoLote.paraIngressosVendidos(inscricoesConfirmadas, capacidadeMaxima);
+        if (proximo.ordinal() > loteAtivo.ordinal()) {
+            this.loteAtivo = proximo;
+            return true;
+        }
+        return false;
     }
 }

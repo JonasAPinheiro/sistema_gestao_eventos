@@ -1,7 +1,6 @@
 package br.com.sge.sistemagestaoeventos.dto;
 
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
-import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
@@ -20,8 +19,7 @@ public record EventoRequestDTO(
         int capacidadeMaxima,
         TipoModalidade tipoModalidade,
         Integer idadeMinima,
-        BigDecimal valorBase,
-        TipoLote loteAtivo
+        BigDecimal valorBase
 ) {
 
     public Evento toEvento(ModalidadeEvento modalidade) {
@@ -35,8 +33,7 @@ public record EventoRequestDTO(
                         local,
                         capacidadeMaxima,
                         modalidade,
-                        valorBase,
-                        loteAtivo
+                        valorBase
                 )
         );
     }

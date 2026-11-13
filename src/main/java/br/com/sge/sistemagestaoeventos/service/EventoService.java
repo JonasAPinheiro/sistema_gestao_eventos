@@ -62,11 +62,16 @@ public class EventoService {
         eventoExistente.setLocal(dto.local());
         eventoExistente.setCapacidadeMaxima(dto.capacidadeMaxima());
         eventoExistente.setValorBase(dto.valorBase() == null ? java.math.BigDecimal.ZERO : dto.valorBase());
-        eventoExistente.setLoteAtivo(dto.loteAtivo() == null ? br.com.sge.sistemagestaoeventos.enums.TipoLote.LOTE_2 : dto.loteAtivo());
 
         validarDadosDoEvento(eventoExistente);
 
         return eventoRepository.salvar(eventoExistente);
+    }
+
+    public void avancarLoteSeNecessario(Evento evento, long inscricoesConfirmadas) {
+        if (evento.avancarLote(inscricoesConfirmadas)) {
+            eventoRepository.salvar(evento);
+        }
     }
 
     public Evento cancelar(String id) {
