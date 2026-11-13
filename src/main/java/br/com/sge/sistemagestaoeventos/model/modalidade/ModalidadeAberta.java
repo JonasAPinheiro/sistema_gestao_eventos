@@ -18,6 +18,11 @@ public class ModalidadeAberta implements ModalidadeEvento {
     }
 
     @Override
+    public boolean isGratuita() {
+        return true;
+    }
+
+    @Override
     public void validarCancelamento(LocalDateTime inicioEvento, LocalDateTime momentoCancelamento, String motivo) {
         if (!momentoCancelamento.isBefore(inicioEvento)) {
             throw new RegraNegocioException("Não é possível cancelar a inscrição após o início do evento.");
