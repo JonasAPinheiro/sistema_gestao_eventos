@@ -50,8 +50,8 @@ public class Evento {
         this.status = StatusEvento.ATIVO;
         this.criadoEm = LocalDateTime.now(Clock.systemDefaultZone());
         this.modalidade = dados.modalidade();
-        this.valorBase = dados.valorBase() == null ? BigDecimal.ZERO : valorBase;
-        this.loteAtivo = dados.loteAtivo() == null ? TipoLote.LOTE_2 : loteAtivo;
+        this.valorBase = dados.valorBase() == null ? BigDecimal.ZERO : dados.valorBase();
+        this.loteAtivo = dados.loteAtivo() == null ? TipoLote.LOTE_2 : dados.loteAtivo();
     }
 
     public void cancelar() {
