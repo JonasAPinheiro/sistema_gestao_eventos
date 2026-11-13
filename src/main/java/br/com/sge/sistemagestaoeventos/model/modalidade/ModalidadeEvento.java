@@ -9,5 +9,9 @@ public interface ModalidadeEvento {
     TipoModalidade getTipo();
     TipoComprovante getTipoComprovante();
 
+    default boolean isGratuita() {
+        return false;
+    }
+
     void validarCancelamento(LocalDateTime inicioEvento, LocalDateTime momentoCancelamento, String motivo);
 }

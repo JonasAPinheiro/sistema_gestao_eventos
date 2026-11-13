@@ -2,6 +2,7 @@ package br.com.sge.sistemagestaoeventos.model.comprovante;
 
 import br.com.sge.sistemagestaoeventos.enums.TipoComprovante;
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.Participante;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
@@ -26,17 +27,21 @@ class EmissorComprovanteSimplesTest {
     @DisplayName("Deve emitir comprovante simples com resumo básico da inscrição")
     void deveEmitirComprovanteSimples() {
 
-        Inscricao inscricao = new Inscricao("evento-1", "participante-1");
+        Inscricao inscricao = new Inscricao("evento-1", "participante-1", java.math.BigDecimal.ZERO);
 
         Evento evento = new Evento(
-                "Workshop de Java",
-                "Descrição do evento",
-                LocalDate.of(2026, 11, 10),
-                LocalTime.of(19, 0),
-                LocalTime.of(21, 0),
-                "Auditório Central",
-                50,
-                new ModalidadeAberta()
+                new EventoDados(
+                        "Workshop de Java",
+                        "Descrição do evento",
+                        LocalDate.of(2026, 11, 10),
+                        LocalTime.of(19, 0),
+                        LocalTime.of(21, 0),
+                        "Auditório Central",
+                        50,
+                        new ModalidadeAberta(),
+                        null,
+                        null
+                )
         );
 
         Participante participante = new Participante(

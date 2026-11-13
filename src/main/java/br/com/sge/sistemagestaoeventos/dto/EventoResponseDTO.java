@@ -2,11 +2,13 @@ package br.com.sge.sistemagestaoeventos.dto;
 
 import br.com.sge.sistemagestaoeventos.enums.StatusEvento;
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
+import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.model.Evento;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.math.BigDecimal;
 
 public record EventoResponseDTO(
         String id,
@@ -19,7 +21,9 @@ public record EventoResponseDTO(
         int capacidadeMaxima,
         StatusEvento status,
         LocalDateTime criadoEm,
-        TipoModalidade tipoModalidade
+        TipoModalidade tipoModalidade,
+        BigDecimal valorBase,
+        TipoLote loteAtivo
 ) {
     public static EventoResponseDTO from(Evento evento) {
         return new EventoResponseDTO(
@@ -33,7 +37,9 @@ public record EventoResponseDTO(
                 evento.getCapacidadeMaxima(),
                 evento.getStatus(),
                 evento.getCriadoEm(),
-                evento.getModalidade().getTipo()
+                evento.getModalidade().getTipo(),
+                evento.getValorBase(),
+                evento.getLoteAtivo()
         );
     }
 }

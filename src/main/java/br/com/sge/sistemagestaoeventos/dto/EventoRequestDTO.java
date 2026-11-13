@@ -1,11 +1,14 @@
 package br.com.sge.sistemagestaoeventos.dto;
 
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
+import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.math.BigDecimal;
 
 public record EventoRequestDTO(
         String titulo,
@@ -16,19 +19,25 @@ public record EventoRequestDTO(
         String local,
         int capacidadeMaxima,
         TipoModalidade tipoModalidade,
-        Integer idadeMinima
+        Integer idadeMinima,
+        BigDecimal valorBase,
+        TipoLote loteAtivo
 ) {
 
     public Evento toEvento(ModalidadeEvento modalidade) {
         return new Evento(
-                titulo,
-                descricao,
-                data,
-                horaInicio,
-                horaFim,
-                local,
-                capacidadeMaxima,
-                modalidade
+                new EventoDados(
+                        titulo,
+                        descricao,
+                        data,
+                        horaInicio,
+                        horaFim,
+                        local,
+                        capacidadeMaxima,
+                        modalidade,
+                        valorBase,
+                        loteAtivo
+                )
         );
     }
 }

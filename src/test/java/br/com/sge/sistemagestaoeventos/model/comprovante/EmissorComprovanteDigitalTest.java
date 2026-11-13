@@ -3,6 +3,7 @@ package br.com.sge.sistemagestaoeventos.model.comprovante;
 import br.com.sge.sistemagestaoeventos.enums.TipoComprovante;
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.model.Evento;
+import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.Participante;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
@@ -18,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -66,14 +66,19 @@ class EmissorComprovanteDigitalTest {
                 .thenReturn(TipoModalidade.ABERTO);
 
         Evento evento = new Evento(
-                "Evento de Teste",
-                "Descrição do evento",
-                LocalDate.of(2026, 11, 10),
-                LocalTime.of(19, 0),
-                LocalTime.of(21, 0),
-                "Local do evento",
-                100,
-                modalidade
+                new EventoDados(
+
+                        "Evento de Teste",
+                        "Descrição do evento",
+                        LocalDate.of(2026, 11, 10),
+                        LocalTime.of(19, 0),
+                        LocalTime.of(21, 0),
+                        "Local do evento",
+                        100,
+                        modalidade,
+                        null,
+                        null
+                )
         );
 
         Participante participante = new Participante(
@@ -219,8 +224,8 @@ class EmissorComprovanteDigitalTest {
                 Path.of("comprovantes/comprovante-inscricao-1.txt");
 
         when(escritorArquivo.escrever(
-                eq(destinoEsperado),
-                eq("conteudo do comprovante")
+                destinoEsperado,
+                "conteudo do comprovante"
         )).thenReturn(destinoEsperado);
 
         EmissorComprovanteDigital emissor =
@@ -238,8 +243,8 @@ class EmissorComprovanteDigitalTest {
 
         verify(escritorArquivo)
                 .escrever(
-                        eq(destinoEsperado),
-                        eq("conteudo do comprovante")
+                        destinoEsperado,
+                        "conteudo do comprovante"
                 );
     }
 }
