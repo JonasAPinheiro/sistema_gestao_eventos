@@ -20,11 +20,14 @@ public class InscricaoService {
     private final InscricaoRepository inscricaoRepository;
     private final EventoService eventoService;
     private final ParticipanteService participanteService;
+    private final CalculadoraValorInscricao calculadoraValor;
 
-    public InscricaoService(InscricaoRepository inscricaoRepository, EventoService eventoService, ParticipanteService participanteService) {
+    public InscricaoService(InscricaoRepository inscricaoRepository, EventoService eventoService,
+                            ParticipanteService participanteService, CalculadoraValorInscricao calculadoraValor) {
         this.inscricaoRepository = inscricaoRepository;
         this.eventoService = eventoService;
         this.participanteService = participanteService;
+        this.calculadoraValor = calculadoraValor;
     }
 
     public Inscricao inscrever(String eventoId, String participanteId) {
@@ -55,7 +58,7 @@ public class InscricaoService {
             validador.validarElegibilidade(participante);
         }
 
-        return inscricaoRepository.salvar(new Inscricao(eventoId, participanteId));
+        return inscricaoRepository.salvar(new Inscricao(eventoId, participanteId, calculadoraValor.calcular(evento)));
     }
 
     public void cancelar(String eventoId, String participanteId, String motivo) {
