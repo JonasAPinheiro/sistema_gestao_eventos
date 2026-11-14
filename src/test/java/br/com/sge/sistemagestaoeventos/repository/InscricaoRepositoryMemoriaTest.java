@@ -151,8 +151,12 @@ class InscricaoRepositoryMemoriaTest {
     @Test
     @DisplayName("Deve contar apenas inscrições confirmadas do evento")
     void deveContarApenasInscricoesConfirmadasDoEvento() {
-        repository.salvar(new Inscricao("evento-1", "participante-1", java.math.BigDecimal.ZERO));
-        repository.salvar(new Inscricao("evento-1", "participante-2", java.math.BigDecimal.ZERO));
+        Inscricao primeira = new Inscricao("evento-1", "participante-1", java.math.BigDecimal.ZERO);
+        primeira.confirmar();
+        repository.salvar(primeira);
+        Inscricao segunda = new Inscricao("evento-1", "participante-2", java.math.BigDecimal.ZERO);
+        segunda.confirmar();
+        repository.salvar(segunda);
 
         Inscricao cancelada = new Inscricao("evento-1", "participante-3", java.math.BigDecimal.ZERO);
         cancelada.cancelar("Mudança de planos");
@@ -167,5 +171,17 @@ class InscricaoRepositoryMemoriaTest {
     @DisplayName("Deve retornar zero ao contar evento sem inscrições confirmadas")
     void deveRetornarZeroParaEventoSemInscricoesConfirmadas() {
         assertThat(repository.contarConfirmadasPorEvento("evento-1")).isZero();
+    }
+    @Test
+    @DisplayName("Deve buscar última inscrição mesmo quando estiver cancelada")
+    void deveBuscarUltimaInscricaoMesmoCancelada() {
+        Inscricao cancelada = new Inscricao("evento-1", "participante-1", java.math.BigDecimal.ZERO);
+        cancelada.cancelar("Mudança de planos");
+        repository.salvar(cancelada);
+
+        Optional<Inscricao> resultado =
+                repository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1");
+
+        assertThat(resultado).containsSame(cancelada);
     }
 }

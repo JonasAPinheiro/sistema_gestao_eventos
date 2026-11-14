@@ -10,6 +10,10 @@ public record ComprovanteResponseDTO(
         String payloadQrCode
 ) {
     public static ComprovanteResponseDTO from(Comprovante comprovante) {
+        if (comprovante == null) {
+            return null;
+        }
+
         return new ComprovanteResponseDTO(
                 comprovante.getInscricaoId(),
                 comprovante.getTipo(),
