@@ -29,6 +29,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.mockito.Mockito.mock;
@@ -53,118 +54,43 @@ class InscricaoControllerTest {
     private ExportacaoComprovanteService exportacaoComprovanteService;
 
     @Test
-    @DisplayName("POST /eventos/{eventoId}/inscricoes - Deve retornar 201 com comprovante")
-    void deveRealizarInscricaoComComprovante() throws Exception {
+    @DisplayName("POST /eventos/{eventoId}/inscricoes - Deve criar inscrição pendente")
+    void deveRealizarInscricaoPendente() throws Exception {
+        Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+        InscricaoRequestDTO dto = new InscricaoRequestDTO("participante-1");
+        when(inscricaoService.inscrever("evento-1", "participante-1")).thenReturn(inscricao);
 
-        Inscricao inscricao = criarInscricao(
-                "evento-1",
-                "participante-1"
-        );
-
-        Comprovante comprovante = criarComprovante(inscricao);
-
-        InscricaoRequestDTO dto =
-                new InscricaoRequestDTO("participante-1");
-
-        when(inscricaoService.inscrever(
-                "evento-1",
-                "participante-1"
-        )).thenReturn(inscricao);
-
-        when(comprovanteService.emitir(inscricao))
-                .thenReturn(comprovante);
-
-        mockMvc.perform(
-                        post("/eventos/evento-1/inscricoes")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(dto)
-                                )
-                )
+        mockMvc.perform(post("/eventos/evento-1/inscricoes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.eventoId")
-                        .value("evento-1"))
-                .andExpect(jsonPath("$.participanteId")
-                        .value("participante-1"))
-                .andExpect(jsonPath("$.status")
-                        .value("CONFIRMADA"))
-                .andExpect(jsonPath("$.comprovante")
-                        .exists())
-                .andExpect(jsonPath("$.comprovante.inscricaoId")
-                        .value(inscricao.getId()))
-                .andExpect(jsonPath("$.comprovante.tipo")
-                        .value("SIMPLES"))
-                .andExpect(jsonPath("$.comprovante.conteudo")
-                        .value("COMPROVANTE DE INSCRIÇÃO"))
-                .andExpect(jsonPath("$.comprovante.payloadQrCode")
-                        .doesNotExist());
+                .andExpect(jsonPath("$.status").value("PENDENTE"))
+                .andExpect(jsonPath("$.comprovante").doesNotExist());
 
-        assertThat(inscricao.getComprovante())
-                .isSameAs(comprovante);
-
-        verify(inscricaoService)
-                .inscrever(
-                        "evento-1",
-                        "participante-1"
-                );
-
-        verify(comprovanteService)
-                .emitir(inscricao);
+        verify(inscricaoService).inscrever("evento-1", "participante-1");
+        verifyNoInteractions(comprovanteService);
     }
 
     @Test
-    @DisplayName("POST /eventos/{eventoId}/inscricoes - Deve retornar 201 com comprovante digital completo")
-    void deveRealizarInscricaoComComprovanteDigital() throws Exception {
+    @DisplayName("PATCH /eventos/{eventoId}/inscricoes/{participanteId}/confirmacao - Deve retornar comprovante")
+    void deveConfirmarInscricaoComComprovanteDigital() throws Exception {
+        Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+        inscricao.confirmar();
+        PayloadQrCode payload = new PayloadQrCode("hash-123", inscricao.getId(), "evento-1", "participante-1");
+        Comprovante comprovante = new ComprovanteDigital(inscricao.getId(), "COMPROVANTE DIGITAL DE INSCRIÇÃO", payload);
+        when(inscricaoService.confirmar("evento-1", "participante-1")).thenReturn(inscricao);
+        when(comprovanteService.emitir(inscricao)).thenReturn(comprovante);
 
-        Inscricao inscricao = criarInscricao(
-                "evento-1",
-                "participante-1"
-        );
+        mockMvc.perform(patch("/eventos/evento-1/inscricoes/participante-1/confirmacao"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CONFIRMADA"))
+                .andExpect(jsonPath("$.comprovante.tipo").value("DIGITAL_COMPLETO"))
+                .andExpect(jsonPath("$.comprovante.conteudo").value("COMPROVANTE DIGITAL DE INSCRIÇÃO"))
+                .andExpect(jsonPath("$.comprovante.payloadQrCode").value(payload.toString()));
 
-        PayloadQrCode payload = new PayloadQrCode(
-                "hash-123",
-                inscricao.getId(),
-                "evento-1",
-                "participante-1"
-        );
-
-        Comprovante comprovante = new ComprovanteDigital(
-                inscricao.getId(),
-                "COMPROVANTE DIGITAL DE INSCRIÇÃO",
-                payload
-        );
-
-        InscricaoRequestDTO dto =
-                new InscricaoRequestDTO("participante-1");
-
-        when(inscricaoService.inscrever(
-                "evento-1",
-                "participante-1"
-        )).thenReturn(inscricao);
-
-        when(comprovanteService.emitir(inscricao))
-                .thenReturn(comprovante);
-
-        mockMvc.perform(
-                        post("/eventos/evento-1/inscricoes")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        objectMapper.writeValueAsString(dto)
-                                )
-                )
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.comprovante.tipo")
-                        .value("DIGITAL_COMPLETO"))
-                .andExpect(jsonPath("$.comprovante.conteudo")
-                        .value("COMPROVANTE DIGITAL DE INSCRIÇÃO"))
-                .andExpect(jsonPath("$.comprovante.payloadQrCode")
-                        .value(payload.toString()));
-
-        assertThat(inscricao.getComprovante())
-                .isSameAs(comprovante);
-
-        verify(comprovanteService)
-                .emitir(inscricao);
+        assertThat(inscricao.getComprovante()).isSameAs(comprovante);
+        verify(inscricaoService).confirmar("evento-1", "participante-1");
+        verify(comprovanteService).emitir(inscricao);
     }
 
     @Test
