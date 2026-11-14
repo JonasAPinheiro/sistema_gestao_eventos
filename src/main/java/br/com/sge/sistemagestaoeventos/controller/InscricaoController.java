@@ -36,6 +36,12 @@ public class InscricaoController {
     @ResponseStatus(HttpStatus.CREATED)
     public InscricaoResponseDTO inscrever(@PathVariable String eventoId, @RequestBody InscricaoRequestDTO dto) {
         Inscricao inscricao = inscricaoService.inscrever(eventoId, dto.participanteId());
+        return InscricaoResponseDTO.from(inscricao);
+    }
+
+    @PatchMapping("/eventos/{eventoId}/inscricoes/{participanteId}/confirmacao")
+    public InscricaoResponseDTO confirmar(@PathVariable String eventoId, @PathVariable String participanteId) {
+        Inscricao inscricao = inscricaoService.confirmar(eventoId, participanteId);
         Comprovante comprovante = comprovanteService.emitir(inscricao);
         inscricao.setComprovante(comprovante);
         return InscricaoResponseDTO.from(inscricao);
