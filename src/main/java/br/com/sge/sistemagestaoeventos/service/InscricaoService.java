@@ -48,19 +48,36 @@ public class InscricaoService {
                     throw new RegraNegocioException("O participante já possui uma inscrição ativa neste evento.");
                 });
 
-        long confirmadas = inscricaoRepository.contarConfirmadasPorEvento(eventoId);
-        long vagasDisponiveis = evento.getCapacidadeMaxima() - confirmadas;
-
-        if (vagasDisponiveis <= 0) {
-            throw new RegraNegocioException("Não há vagas disponíveis para este evento.");
-        }
-
         if (evento.getModalidade() instanceof ValidadorElegibilidade validador) {
             validador.validarElegibilidade(participante);
         }
 
-        Inscricao inscricao = inscricaoRepository.salvar(
+        return inscricaoRepository.salvar(
                 new Inscricao(eventoId, participanteId, calculadoraValor.calcular(evento)));
+    }
+
+    public Inscricao confirmar(String eventoId, String participanteId) {
+        Evento evento = eventoService.buscarPorId(eventoId);
+        participanteService.buscarPorId(participanteId);
+        Inscricao inscricao = inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante(eventoId, participanteId)
+                .orElseThrow(() -> new InscricaoNaoEncontradaException(eventoId, participanteId));
+        inscricao.validarPendente();
+
+        if (evento.getStatus() == StatusEvento.CANCELADO) {
+            throw new RegraNegocioException("Não é possível confirmar inscrição em um evento cancelado.");
+        }
+        LocalDateTime inicioEvento = LocalDateTime.of(evento.getData(), evento.getHoraInicio());
+        if (!inicioEvento.isAfter(LocalDateTime.now(Clock.systemDefaultZone()))) {
+            throw new RegraNegocioException("Não é possível confirmar inscrição após o início do evento.");
+        }
+
+        long confirmadas = inscricaoRepository.contarConfirmadasPorEvento(eventoId);
+        if (confirmadas >= evento.getCapacidadeMaxima()) {
+            throw new RegraNegocioException("Não há vagas disponíveis para confirmar a inscrição.");
+        }
+
+        inscricao.confirmar();
+        inscricaoRepository.salvar(inscricao);
         eventoService.avancarLoteSeNecessario(evento, confirmadas + 1);
         return inscricao;
     }
@@ -69,8 +86,9 @@ public class InscricaoService {
         Evento evento = eventoService.buscarPorId(eventoId);
         participanteService.buscarPorId(participanteId);
 
-        Inscricao inscricao = inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante(eventoId, participanteId)
+        Inscricao inscricao = inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante(eventoId, participanteId)
                 .orElseThrow(() -> new InscricaoNaoEncontradaException(eventoId, participanteId));
+        inscricao.validarPendente();
 
         LocalDateTime inicioEvento = LocalDateTime.of(evento.getData(), evento.getHoraInicio());
 
