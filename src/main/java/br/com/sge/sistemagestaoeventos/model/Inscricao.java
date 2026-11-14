@@ -1,6 +1,7 @@
 package br.com.sge.sistemagestaoeventos.model;
 
 import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
+import br.com.sge.sistemagestaoeventos.exception.StatusInvalidoException;
 import br.com.sge.sistemagestaoeventos.model.comprovante.Comprovante;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,11 +29,23 @@ public class Inscricao {
         this.eventoId = eventoId;
         this.participanteId = participanteId;
         this.criadoEm = LocalDateTime.now(Clock.systemDefaultZone());
-        this.status = StatusInscricao.CONFIRMADA;
+        this.status = StatusInscricao.PENDENTE;
         this.valorFinal = valorFinal;
     }
 
+    public void validarPendente() {
+        if (status != StatusInscricao.PENDENTE) {
+            throw new StatusInvalidoException("Somente inscrições pendentes podem mudar de estado.");
+        }
+    }
+
+    public void confirmar() {
+        validarPendente();
+        this.status = StatusInscricao.CONFIRMADA;
+    }
+
     public void cancelar(String motivo) {
+        validarPendente();
         this.status = StatusInscricao.CANCELADA;
         this.motivoCancelamento = motivo;
     }
