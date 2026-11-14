@@ -5,6 +5,7 @@ import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,8 +25,16 @@ public class InscricaoRepositoryMemoria implements InscricaoRepository {
         return inscricoesPorId.values().stream()
                 .filter(inscricao -> inscricao.getEventoId().equals(eventoId))
                 .filter(inscricao -> inscricao.getParticipanteId().equals(participanteId))
-                .filter(inscricao -> inscricao.getStatus() == StatusInscricao.CONFIRMADA)
+                .filter(inscricao -> inscricao.getStatus() != StatusInscricao.CANCELADA)
                 .findFirst();
+    }
+
+    @Override
+    public Optional<Inscricao> buscarUltimaInscricaoPorEventoEParticipante(String eventoId, String participanteId) {
+        return inscricoesPorId.values().stream()
+                .filter(inscricao -> inscricao.getEventoId().equals(eventoId))
+                .filter(inscricao -> inscricao.getParticipanteId().equals(participanteId))
+                .max(Comparator.comparing(Inscricao::getCriadoEm));
     }
 
     @Override

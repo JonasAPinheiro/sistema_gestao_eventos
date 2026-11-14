@@ -8,6 +8,7 @@ import java.util.Optional;
 public interface InscricaoRepository {
     Inscricao salvar(Inscricao inscricao);
     Optional<Inscricao> buscarInscricaoAtivaPorEventoEParticipante(String eventoId, String participanteId);
+    Optional<Inscricao> buscarUltimaInscricaoPorEventoEParticipante(String eventoId, String participanteId);
     List<Inscricao> listarPorEvento(String eventoId);
     List<Inscricao> listarPorParticipante(String participanteId);
     long contarConfirmadasPorEvento(String eventoId);
