@@ -52,6 +52,7 @@ class ParticipanteControllerTest {
                 .andExpect(jsonPath("$.id").value(participante.getId()))
                 .andExpect(jsonPath("$.nome").value("Maria Silva"))
                 .andExpect(jsonPath("$.email").value("maria@email.com"))
+                .andExpect(jsonPath("$.telefone").value("11999999999"))
                 .andExpect(jsonPath("$.criadoEm").exists());
 
         verify(participanteService).buscarPorId("1");
@@ -157,10 +158,10 @@ class ParticipanteControllerTest {
     }
 
     private static Participante criarParticipante(String nome, String email) {
-        return new Participante("12345", nome, email, LocalDate.of(1995, 1, 1));
+        return new Participante("12345", nome, email, "11999999999", LocalDate.of(1995, 1, 1));
     }
 
     private static ParticipanteRequestDTO criarDto(String nome, String email) {
-        return new ParticipanteRequestDTO(nome, email, "12345", LocalDate.of(1995, 1, 1));
+        return new ParticipanteRequestDTO(nome, email, "11999999999", "12345", LocalDate.of(1995, 1, 1));
     }
 }

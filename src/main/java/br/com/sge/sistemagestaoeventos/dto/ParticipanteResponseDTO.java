@@ -11,6 +11,7 @@ public record ParticipanteResponseDTO(
         boolean matriculaAtiva,
         String nome,
         String email,
+        String telefone,
         LocalDate dataNascimento,
         LocalDateTime criadoEm
 ) {
@@ -21,6 +22,7 @@ public record ParticipanteResponseDTO(
                 participante.isMatriculaAtiva(),
                 participante.getNome(),
                 participante.getEmail(),
+                participante.getTelefone(),
                 participante.getDataNascimento(),
                 participante.getCriadoEm()
         );
