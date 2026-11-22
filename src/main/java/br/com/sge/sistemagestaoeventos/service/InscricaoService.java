@@ -21,13 +21,16 @@ public class InscricaoService {
     private final EventoService eventoService;
     private final ParticipanteService participanteService;
     private final CalculadoraValorInscricao calculadoraValor;
+    private final NotificacaoService notificacaoService;
 
     public InscricaoService(InscricaoRepository inscricaoRepository, EventoService eventoService,
-                            ParticipanteService participanteService, CalculadoraValorInscricao calculadoraValor) {
+                            ParticipanteService participanteService, CalculadoraValorInscricao calculadoraValor,
+                            NotificacaoService notificacaoService) {
         this.inscricaoRepository = inscricaoRepository;
         this.eventoService = eventoService;
         this.participanteService = participanteService;
         this.calculadoraValor = calculadoraValor;
+        this.notificacaoService = notificacaoService;
     }
 
     public Inscricao inscrever(String eventoId, String participanteId) {
@@ -58,7 +61,7 @@ public class InscricaoService {
 
     public Inscricao confirmar(String eventoId, String participanteId) {
         Evento evento = eventoService.buscarPorId(eventoId);
-        participanteService.buscarPorId(participanteId);
+        Participante participante = participanteService.buscarPorId(participanteId);
         Inscricao inscricao = inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante(eventoId, participanteId)
                 .orElseThrow(() -> new InscricaoNaoEncontradaException(eventoId, participanteId));
         inscricao.validarPendente();
@@ -79,12 +82,13 @@ public class InscricaoService {
         inscricao.confirmar();
         inscricaoRepository.salvar(inscricao);
         eventoService.avancarLoteSeNecessario(evento, confirmadas + 1);
+        notificacaoService.notificarAlteracaoStatus(inscricao, participante);
         return inscricao;
     }
 
     public void cancelar(String eventoId, String participanteId, String motivo) {
         Evento evento = eventoService.buscarPorId(eventoId);
-        participanteService.buscarPorId(participanteId);
+        Participante participante = participanteService.buscarPorId(participanteId);
 
         Inscricao inscricao = inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante(eventoId, participanteId)
                 .orElseThrow(() -> new InscricaoNaoEncontradaException(eventoId, participanteId));
@@ -96,6 +100,7 @@ public class InscricaoService {
 
         inscricao.cancelar(motivo);
         inscricaoRepository.salvar(inscricao);
+        notificacaoService.notificarAlteracaoStatus(inscricao, participante);
     }
 
     public List<Inscricao> listarPorEvento(String eventoId) {

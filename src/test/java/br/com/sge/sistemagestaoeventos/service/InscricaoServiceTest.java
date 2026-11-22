@@ -45,6 +45,9 @@ class InscricaoServiceTest {
     @Mock
     private CalculadoraValorInscricao calculadoraValor;
 
+    @Mock
+    private NotificacaoService notificacaoService;
+
     @InjectMocks
     private InscricaoService inscricaoService;
 
@@ -157,6 +160,7 @@ class InscricaoServiceTest {
             assertThat(resultado.getStatus()).isEqualTo(StatusInscricao.CONFIRMADA);
             verify(inscricaoRepository).salvar(inscricao);
             verify(eventoService).avancarLoteSeNecessario(evento, 1L);
+            verify(notificacaoService).notificarAlteracaoStatus(eq(inscricao), any(Participante.class));
         }
 
         @Test
@@ -173,6 +177,7 @@ class InscricaoServiceTest {
             assertThat(inscricao.getStatus()).isEqualTo(StatusInscricao.CANCELADA);
             assertThat(inscricao.getMotivoCancelamento()).isEqualTo(motivo);
             verify(inscricaoRepository).salvar(inscricao);
+            verify(notificacaoService).notificarAlteracaoStatus(eq(inscricao), any(Participante.class));
         }
 
         @Test
