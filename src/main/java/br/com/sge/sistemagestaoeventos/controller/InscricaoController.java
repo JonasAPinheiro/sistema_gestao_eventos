@@ -35,13 +35,15 @@ public class InscricaoController {
     @PostMapping("/eventos/{eventoId}/inscricoes")
     @ResponseStatus(HttpStatus.CREATED)
     public InscricaoResponseDTO inscrever(@PathVariable String eventoId, @RequestBody InscricaoRequestDTO dto) {
-        Inscricao inscricao = inscricaoService.inscrever(eventoId, dto.participanteId());
+        Inscricao inscricao = inscricaoService.inscrever(eventoId, dto.participanteId(), dto.formaPagamento());
         return InscricaoResponseDTO.from(inscricao);
     }
 
     @PatchMapping("/eventos/{eventoId}/inscricoes/{participanteId}/confirmacao")
-    public InscricaoResponseDTO confirmar(@PathVariable String eventoId, @PathVariable String participanteId) {
-        Inscricao inscricao = inscricaoService.confirmar(eventoId, participanteId);
+    public InscricaoResponseDTO confirmar(@PathVariable String eventoId,
+                                          @PathVariable String participanteId,
+                                          @RequestParam(defaultValue = "false") boolean usarCarteira) {
+        Inscricao inscricao = inscricaoService.confirmar(eventoId, participanteId, usarCarteira);
         Comprovante comprovante = comprovanteService.emitir(inscricao);
         inscricao.setComprovante(comprovante);
         return InscricaoResponseDTO.from(inscricao);

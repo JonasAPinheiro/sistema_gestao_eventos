@@ -44,6 +44,7 @@ public class ParticipanteService {
 
         participanteExistente.setNome(dadosAtualizados.getNome());
         participanteExistente.setEmail(dadosAtualizados.getEmail());
+        participanteExistente.setTelefone(dadosAtualizados.getTelefone());
 
         return participanteRepository.salvar(participanteExistente);
     }
@@ -51,6 +52,7 @@ public class ParticipanteService {
     private void validarDadosDoParticipante(Participante participante) {
         validarNome(participante.getNome());
         validarEmail(participante.getEmail());
+        validarTelefone(participante.getTelefone());
         validarDataNascimento(participante.getDataNascimento());
     }
 
@@ -67,6 +69,12 @@ public class ParticipanteService {
 
         if (!EMAIL_PATTERN.matcher(email).matches()) {
             throw new RegraNegocioException("O e-mail do participante deve possuir um formato válido.");
+        }
+    }
+
+    private void validarTelefone(String telefone) {
+        if (telefone == null || telefone.isBlank()) {
+            throw new RegraNegocioException("O telefone do participante é obrigatório.");
         }
     }
 

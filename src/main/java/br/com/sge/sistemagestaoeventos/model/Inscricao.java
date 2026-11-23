@@ -1,14 +1,16 @@
 package br.com.sge.sistemagestaoeventos.model;
 
+import br.com.sge.sistemagestaoeventos.enums.FormaPagamento;
 import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
 import br.com.sge.sistemagestaoeventos.exception.StatusInvalidoException;
 import br.com.sge.sistemagestaoeventos.model.comprovante.Comprovante;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -22,7 +24,10 @@ public class Inscricao {
     private final BigDecimal valorFinal;
     @Setter
     private Comprovante comprovante;
-
+    @Setter
+    private FormaPagamento formaPagamento;
+    private BigDecimal valorPagoCarteira = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+    private boolean reembolsada;
 
     public Inscricao(String eventoId, String participanteId, BigDecimal valorFinal) {
         this.id = UUID.randomUUID().toString();
@@ -48,5 +53,23 @@ public class Inscricao {
         validarPendente();
         this.status = StatusInscricao.CANCELADA;
         this.motivoCancelamento = motivo;
+    }
+
+    public void validarReembolsavel() {
+        if (status != StatusInscricao.CONFIRMADA) {
+            throw new StatusInvalidoException("Somente inscrições confirmadas podem ser reembolsadas.");
+        }
+        if (reembolsada) {
+            throw new StatusInvalidoException("Esta inscrição já foi reembolsada.");
+        }
+    }
+
+    public void registrarReembolso() {
+        validarReembolsavel();
+        this.reembolsada = true;
+    }
+
+    public void registrarPagamentoCarteira(BigDecimal valor) {
+        this.valorPagoCarteira = valor.setScale(2, RoundingMode.HALF_UP);
     }
 }

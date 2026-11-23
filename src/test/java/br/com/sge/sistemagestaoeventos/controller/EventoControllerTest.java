@@ -3,9 +3,11 @@ package br.com.sge.sistemagestaoeventos.controller;
 import br.com.sge.sistemagestaoeventos.dto.EventoRequestDTO;
 import br.com.sge.sistemagestaoeventos.enums.TipoModalidade;
 import br.com.sge.sistemagestaoeventos.exception.EventoNaoEncontradoException;
+import br.com.sge.sistemagestaoeventos.exception.StatusInvalidoException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
+import br.com.sge.sistemagestaoeventos.service.CancelamentoEventoService;
 import br.com.sge.sistemagestaoeventos.service.EventoService;
 import br.com.sge.sistemagestaoeventos.service.InscricaoService;
 import tools.jackson.databind.ObjectMapper;
@@ -42,6 +44,9 @@ class EventoControllerTest {
 
     @MockitoBean
     private InscricaoService inscricaoService;
+
+    @MockitoBean
+    private CancelamentoEventoService cancelamentoEventoService;
 
     @Test
     @DisplayName("GET /eventos/{id} - Deve retornar status 200 e o evento quando o ID existir")
@@ -180,15 +185,28 @@ class EventoControllerTest {
         Evento eventoCancelado = criarEvento("Evento Cancelado");
         eventoCancelado.cancelar();
 
-        when(eventoService.cancelar("1"))
-                .thenReturn(eventoCancelado);
+        when(cancelamentoEventoService.cancelar("1")).thenReturn(eventoCancelado);
 
         mockMvc.perform(patch("/eventos/1/cancelamento"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.titulo").value("Evento Cancelado"))
                 .andExpect(jsonPath("$.status").value("CANCELADO"));
 
-        verify(eventoService).cancelar("1");
+        verify(cancelamentoEventoService).cancelar("1");
+    }
+
+    @Test
+    @DisplayName("PATCH /eventos/{id}/cancelamento - Deve retornar 409 quando o evento já estiver cancelado")
+    void deveRetornar409QuandoEventoJaEstiverCancelado() throws Exception {
+        when(cancelamentoEventoService.cancelar("1"))
+                .thenThrow(new StatusInvalidoException("O evento já está cancelado."));
+
+        mockMvc.perform(patch("/eventos/1/cancelamento"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("O evento já está cancelado."));
+
+        verify(cancelamentoEventoService).cancelar("1");
     }
 
     @Test

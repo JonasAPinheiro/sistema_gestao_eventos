@@ -295,6 +295,7 @@ class ParticipanteServiceTest {
                     null,
                     "Maria Silva",
                     "maria@email.com",
+                    "11999999999",
                     LocalDate.of(1995, 1, 1)
             );
 
@@ -310,6 +311,7 @@ class ParticipanteServiceTest {
                     "   ",
                     "Maria Silva",
                     "maria@email.com",
+                    "11999999999",
                     LocalDate.of(1995, 1, 1)
             );
 
@@ -324,6 +326,7 @@ class ParticipanteServiceTest {
                     "12345",
                     "Maria Silva",
                     "maria@email.com",
+                    "11999999999",
                     null
             );
 
@@ -341,6 +344,7 @@ class ParticipanteServiceTest {
                     "12345",
                     "Maria Silva",
                     "maria@email.com",
+                    "11999999999",
                     LocalDate.now().plusDays(1)
             );
 
@@ -350,9 +354,35 @@ class ParticipanteServiceTest {
 
             verify(participanteRepository, never()).salvar(any(Participante.class));
         }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando telefone não for informado")
+        void deveValidarTelefoneObrigatorio() {
+            Participante participante = new Participante(
+                    "12345", "Maria Silva", "maria@email.com", null, LocalDate.of(1995, 1, 1));
+
+            assertThatThrownBy(() -> participanteService.cadastrar(participante))
+                    .isInstanceOf(RegraNegocioException.class)
+                    .hasMessage("O telefone do participante é obrigatório.");
+
+            verify(participanteRepository, never()).salvar(any(Participante.class));
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando telefone estiver em branco")
+        void deveValidarTelefoneEmBranco() {
+            Participante participante = new Participante(
+                    "12345", "Maria Silva", "maria@email.com", "   ", LocalDate.of(1995, 1, 1));
+
+            assertThatThrownBy(() -> participanteService.cadastrar(participante))
+                    .isInstanceOf(RegraNegocioException.class)
+                    .hasMessage("O telefone do participante é obrigatório.");
+
+            verify(participanteRepository, never()).salvar(any(Participante.class));
+        }
     }
 
     private static Participante criarParticipante(String nome, String email) {
-        return new Participante("12345", nome, email, LocalDate.of(1995, 1, 1));
+        return new Participante("12345", nome, email, "11999999999", LocalDate.of(1995, 1, 1));
     }
 }

@@ -17,18 +17,25 @@ public class Participante {
     private String nome;
     @Setter
     private String email;
+    @Setter
+    private String telefone;
     private final LocalDate dataNascimento;
     private boolean matriculaAtiva;
     private final LocalDateTime criadoEm;
 
-    public Participante(String matricula, String nome, String email, LocalDate dataNascimento) {
+    public Participante(String matricula, String nome, String email, String telefone, LocalDate dataNascimento) {
         this.id = UUID.randomUUID().toString();
         this.matricula = matricula;
         this.nome = nome;
         this.email = email;
+        this.telefone = telefone;
         this.dataNascimento = dataNascimento;
         this.matriculaAtiva = matricula != null && !matricula.isBlank();
         this.criadoEm = LocalDateTime.now(Clock.systemDefaultZone());
+    }
+
+    public Participante(String matricula, String nome, String email, LocalDate dataNascimento) {
+        this(matricula, nome, email, null, dataNascimento);
     }
 
     public void ativarMatricula() {

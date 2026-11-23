@@ -34,6 +34,11 @@ public class GlobalExceptionHandler {
         return construirResposta(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getRequestURI());
     }
 
+    @ExceptionHandler(StatusInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> tratarStatusInvalido(StatusInvalidoException ex, HttpServletRequest request) {
+        return construirResposta(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI());
+    }
+
     private ResponseEntity<Map<String, Object>> construirResposta(HttpStatus status, String mensagem, String path) {
         Map<String, Object> corpo = new LinkedHashMap<>();
         corpo.put("timestamp", LocalDateTime.now(Clock.systemDefaultZone()));

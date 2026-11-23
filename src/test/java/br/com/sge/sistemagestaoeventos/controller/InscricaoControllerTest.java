@@ -2,6 +2,7 @@ package br.com.sge.sistemagestaoeventos.controller;
 
 import br.com.sge.sistemagestaoeventos.dto.InscricaoRequestDTO;
 import br.com.sge.sistemagestaoeventos.enums.TipoComprovante;
+import br.com.sge.sistemagestaoeventos.enums.FormaPagamento;
 import br.com.sge.sistemagestaoeventos.exception.InscricaoNaoEncontradaException;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.comprovante.Comprovante;
@@ -57,8 +58,8 @@ class InscricaoControllerTest {
     @DisplayName("POST /eventos/{eventoId}/inscricoes - Deve criar inscrição pendente")
     void deveRealizarInscricaoPendente() throws Exception {
         Inscricao inscricao = criarInscricao("evento-1", "participante-1");
-        InscricaoRequestDTO dto = new InscricaoRequestDTO("participante-1");
-        when(inscricaoService.inscrever("evento-1", "participante-1")).thenReturn(inscricao);
+        InscricaoRequestDTO dto = new InscricaoRequestDTO("participante-1", FormaPagamento.values()[0]);
+        when(inscricaoService.inscrever("evento-1", "participante-1", dto.formaPagamento())).thenReturn(inscricao);
 
         mockMvc.perform(post("/eventos/evento-1/inscricoes")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -67,7 +68,7 @@ class InscricaoControllerTest {
                 .andExpect(jsonPath("$.status").value("PENDENTE"))
                 .andExpect(jsonPath("$.comprovante").doesNotExist());
 
-        verify(inscricaoService).inscrever("evento-1", "participante-1");
+        verify(inscricaoService).inscrever("evento-1", "participante-1",FormaPagamento.CARTAO);
         verifyNoInteractions(comprovanteService);
     }
 
@@ -78,7 +79,7 @@ class InscricaoControllerTest {
         inscricao.confirmar();
         PayloadQrCode payload = new PayloadQrCode("hash-123", inscricao.getId(), "evento-1", "participante-1");
         Comprovante comprovante = new ComprovanteDigital(inscricao.getId(), "COMPROVANTE DIGITAL DE INSCRIÇÃO", payload);
-        when(inscricaoService.confirmar("evento-1", "participante-1")).thenReturn(inscricao);
+        when(inscricaoService.confirmar("evento-1", "participante-1", false)).thenReturn(inscricao);
         when(comprovanteService.emitir(inscricao)).thenReturn(comprovante);
 
         mockMvc.perform(patch("/eventos/evento-1/inscricoes/participante-1/confirmacao"))
@@ -89,7 +90,7 @@ class InscricaoControllerTest {
                 .andExpect(jsonPath("$.comprovante.payloadQrCode").value(payload.toString()));
 
         assertThat(inscricao.getComprovante()).isSameAs(comprovante);
-        verify(inscricaoService).confirmar("evento-1", "participante-1");
+        verify(inscricaoService).confirmar("evento-1", "participante-1", false);
         verify(comprovanteService).emitir(inscricao);
     }
 
@@ -319,4 +320,5 @@ class InscricaoControllerTest {
                 "COMPROVANTE DE INSCRIÇÃO"
         );
     }
+
 }
