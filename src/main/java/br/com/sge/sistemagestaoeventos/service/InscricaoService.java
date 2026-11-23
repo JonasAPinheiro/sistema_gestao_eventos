@@ -1,5 +1,6 @@
 package br.com.sge.sistemagestaoeventos.service;
 
+import br.com.sge.sistemagestaoeventos.enums.FormaPagamento;
 import br.com.sge.sistemagestaoeventos.enums.StatusEvento;
 import br.com.sge.sistemagestaoeventos.exception.InscricaoNaoEncontradaException;
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
@@ -10,6 +11,7 @@ import br.com.sge.sistemagestaoeventos.model.modalidade.ValidadorElegibilidade;
 import br.com.sge.sistemagestaoeventos.repository.InscricaoRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,18 +24,20 @@ public class InscricaoService {
     private final ParticipanteService participanteService;
     private final CalculadoraValorInscricao calculadoraValor;
     private final NotificacaoService notificacaoService;
+    private final CarteiraService carteiraService;
 
     public InscricaoService(InscricaoRepository inscricaoRepository, EventoService eventoService,
                             ParticipanteService participanteService, CalculadoraValorInscricao calculadoraValor,
-                            NotificacaoService notificacaoService) {
+                            NotificacaoService notificacaoService, CarteiraService carteiraService) {
         this.inscricaoRepository = inscricaoRepository;
         this.eventoService = eventoService;
         this.participanteService = participanteService;
         this.calculadoraValor = calculadoraValor;
         this.notificacaoService = notificacaoService;
+        this.carteiraService = carteiraService;
     }
 
-    public Inscricao inscrever(String eventoId, String participanteId) {
+    public Inscricao inscrever(String eventoId, String participanteId, FormaPagamento formaPagamento) {
         Evento evento = eventoService.buscarPorId(eventoId);
         Participante participante = participanteService.buscarPorId(participanteId);
 
@@ -55,11 +59,21 @@ public class InscricaoService {
             validador.validarElegibilidade(participante);
         }
 
-        return inscricaoRepository.salvar(
-                new Inscricao(eventoId, participanteId, calculadoraValor.calcular(evento)));
+        boolean eventoPago = !evento.getModalidade().isGratuita();
+        if (eventoPago && formaPagamento == null) {
+            throw new RegraNegocioException("A forma de pagamento é obrigatória para eventos pagos.");
+        }
+
+        Inscricao inscricao = new Inscricao(eventoId, participanteId, calculadoraValor.calcular(evento));
+        inscricao.setFormaPagamento(eventoPago ? formaPagamento : null);
+        return inscricaoRepository.salvar(inscricao);
     }
 
     public Inscricao confirmar(String eventoId, String participanteId) {
+        return confirmar(eventoId, participanteId, false);
+    }
+
+    public Inscricao confirmar(String eventoId, String participanteId, boolean usarCarteira) {
         Evento evento = eventoService.buscarPorId(eventoId);
         Participante participante = participanteService.buscarPorId(participanteId);
         Inscricao inscricao = inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante(eventoId, participanteId)
@@ -77,6 +91,15 @@ public class InscricaoService {
         long confirmadas = inscricaoRepository.contarConfirmadasPorEvento(eventoId);
         if (confirmadas >= evento.getCapacidadeMaxima()) {
             throw new RegraNegocioException("Não há vagas disponíveis para confirmar a inscrição.");
+        }
+
+        if (usarCarteira && !evento.getModalidade().isGratuita()) {
+            BigDecimal saldo = carteiraService.consultar(participanteId).getSaldo();
+            BigDecimal valorUtilizado = saldo.min(inscricao.getValorFinal());
+            if (valorUtilizado.signum() > 0) {
+                carteiraService.debitar(participanteId, valorUtilizado);
+                inscricao.registrarPagamentoCarteira(valorUtilizado);
+            }
         }
 
         inscricao.confirmar();

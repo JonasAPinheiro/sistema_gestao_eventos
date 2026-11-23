@@ -184,4 +184,48 @@ class InscricaoRepositoryMemoriaTest {
 
         assertThat(resultado).containsSame(cancelada);
     }
+
+
+    @Test
+    @DisplayName("Não deve buscar inscrição reembolsada como ativa")
+    void naoDeveBuscarInscricaoReembolsadaComoAtiva() {
+        Inscricao inscricao = new Inscricao(
+                "evento-1",
+                "participante-1",
+                java.math.BigDecimal.ZERO
+        );
+
+        inscricao.confirmar();
+        inscricao.registrarReembolso();
+
+        repository.salvar(inscricao);
+
+        Optional<Inscricao> resultado =
+                repository.buscarInscricaoAtivaPorEventoEParticipante(
+                        "evento-1",
+                        "participante-1"
+                );
+
+        assertThat(resultado).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Não deve contar inscrições confirmadas que foram reembolsadas")
+    void naoDeveContarInscricoesConfirmadasReembolsadas() {
+        Inscricao inscricao = new Inscricao(
+                "evento-1",
+                "participante-1",
+                java.math.BigDecimal.ZERO
+        );
+
+        inscricao.confirmar();
+        inscricao.registrarReembolso();
+
+        repository.salvar(inscricao);
+
+        assertThat(repository.contarConfirmadasPorEvento("evento-1"))
+                .isZero();
+    }
+
+
 }

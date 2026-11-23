@@ -1,13 +1,17 @@
 package br.com.sge.sistemagestaoeventos.service;
 
+import br.com.sge.sistemagestaoeventos.enums.FormaPagamento;
 import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
 import br.com.sge.sistemagestaoeventos.exception.InscricaoNaoEncontradaException;
 import br.com.sge.sistemagestaoeventos.exception.RegraNegocioException;
+import br.com.sge.sistemagestaoeventos.exception.StatusInvalidoException;
 import br.com.sge.sistemagestaoeventos.model.Evento;
 import br.com.sge.sistemagestaoeventos.model.EventoDados;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
-import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
 import br.com.sge.sistemagestaoeventos.model.Participante;
+import br.com.sge.sistemagestaoeventos.model.carteira.Carteira;
+import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeAberta;
+import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeExclusivaParaAlunos;
 import br.com.sge.sistemagestaoeventos.repository.InscricaoRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -18,16 +22,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,37 +40,33 @@ class InscricaoServiceTest {
 
     @Mock
     private InscricaoRepository inscricaoRepository;
-
     @Mock
     private EventoService eventoService;
-
     @Mock
     private ParticipanteService participanteService;
-
     @Mock
     private CalculadoraValorInscricao calculadoraValor;
-
     @Mock
     private NotificacaoService notificacaoService;
+    @Mock
+    private CarteiraService carteiraService;
 
     @InjectMocks
     private InscricaoService inscricaoService;
 
     @Nested
-    @DisplayName("Testes de Consulta")
+    @DisplayName("Consultas")
     class Consultas {
 
         @Test
         @DisplayName("Deve listar inscrições por evento")
         void deveListarInscricoesPorEvento() {
-            Evento evento = criarEventoFuturo(100);
-            List<Inscricao> inscricoes = List.of(criarInscricao("evento-1", "participante-1"));
+            Evento evento = criarEventoGratuito(100);
+            List<Inscricao> inscricoes = List.of(criarInscricao("evento-1", "participante-1", "0.00"));
             when(eventoService.buscarPorId("evento-1")).thenReturn(evento);
             when(inscricaoRepository.listarPorEvento("evento-1")).thenReturn(inscricoes);
 
-            List<Inscricao> resultado = inscricaoService.listarPorEvento("evento-1");
-
-            assertThat(resultado).isEqualTo(inscricoes);
+            assertThat(inscricaoService.listarPorEvento("evento-1")).isEqualTo(inscricoes);
             verify(eventoService).buscarPorId("evento-1");
             verify(inscricaoRepository).listarPorEvento("evento-1");
         }
@@ -73,13 +74,11 @@ class InscricaoServiceTest {
         @Test
         @DisplayName("Deve listar inscrições por participante")
         void deveListarInscricoesPorParticipante() {
-            List<Inscricao> inscricoes = List.of(criarInscricao("evento-1", "participante-1"));
+            List<Inscricao> inscricoes = List.of(criarInscricao("evento-1", "participante-1", "0.00"));
             when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
             when(inscricaoRepository.listarPorParticipante("participante-1")).thenReturn(inscricoes);
 
-            List<Inscricao> resultado = inscricaoService.listarPorParticipante("participante-1");
-
-            assertThat(resultado).isEqualTo(inscricoes);
+            assertThat(inscricaoService.listarPorParticipante("participante-1")).isEqualTo(inscricoes);
             verify(participanteService).buscarPorId("participante-1");
             verify(inscricaoRepository).listarPorParticipante("participante-1");
         }
@@ -87,15 +86,12 @@ class InscricaoServiceTest {
         @Test
         @DisplayName("Deve consultar inscrição ativa")
         void deveConsultarInscricaoAtiva() {
-            Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "0.00");
             prepararEventoEParticipanteExistentes();
             when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.of(inscricao));
 
-            Inscricao resultado = inscricaoService.consultar("evento-1", "participante-1");
-
-            assertThat(resultado).isEqualTo(inscricao);
-            verify(inscricaoRepository).buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1");
+            assertThat(inscricaoService.consultar("evento-1", "participante-1")).isEqualTo(inscricao);
         }
 
         @Test
@@ -114,46 +110,92 @@ class InscricaoServiceTest {
         void deveContarInscricoesConfirmadasPorEvento() {
             when(inscricaoRepository.contarConfirmadasPorEvento("evento-1")).thenReturn(25L);
 
-            long resultado = inscricaoService.contarConfirmadas("evento-1");
-
-            assertThat(resultado).isEqualTo(25L);
+            assertThat(inscricaoService.contarConfirmadas("evento-1")).isEqualTo(25L);
             verify(inscricaoRepository).contarConfirmadasPorEvento("evento-1");
         }
     }
 
     @Nested
-    @DisplayName("Testes de Regras de Negócio e Alteração")
-    class Negocio {
+    @DisplayName("Inscrição e formas de pagamento")
+    class InscricaoTestes {
 
         @Test
-        @DisplayName("Deve realizar inscrição válida")
+        @DisplayName("Deve realizar inscrição válida em evento gratuito")
         void deveRealizarInscricaoValida() {
             Evento evento = prepararEventoEParticipanteExistentes();
             when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.empty());
             when(inscricaoRepository.salvar(any(Inscricao.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
-            when(calculadoraValor.calcular(any(Evento.class))).thenReturn(new BigDecimal("90.00"));
+            when(calculadoraValor.calcular(evento)).thenReturn(new BigDecimal("90.00"));
 
-            Inscricao resultado = inscricaoService.inscrever("evento-1", "participante-1");
+            Inscricao resultado = inscricaoService.inscrever("evento-1", "participante-1", null);
 
             assertThat(resultado.getEventoId()).isEqualTo("evento-1");
             assertThat(resultado.getParticipanteId()).isEqualTo("participante-1");
             assertThat(resultado.getStatus()).isEqualTo(StatusInscricao.PENDENTE);
             assertThat(resultado.getValorFinal()).isEqualByComparingTo("90.00");
+            assertThat(resultado.getFormaPagamento()).isNull();
             verify(inscricaoRepository).salvar(any(Inscricao.class));
             verify(calculadoraValor).calcular(evento);
         }
 
         @Test
+        @DisplayName("Deve registrar a forma de pagamento escolhida em evento pago")
+        void deveRegistrarFormaPagamentoEmEventoPago() {
+            Evento evento = prepararEventoPagoEParticipante();
+            when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1"))
+                    .thenReturn(Optional.empty());
+            when(calculadoraValor.calcular(evento)).thenReturn(new BigDecimal("90.00"));
+            when(inscricaoRepository.salvar(any(Inscricao.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            Inscricao resultado = inscricaoService.inscrever("evento-1", "participante-1", FormaPagamento.PIX);
+
+            assertThat(resultado.getFormaPagamento()).isEqualTo(FormaPagamento.PIX);
+            assertThat(resultado.getValorFinal()).isEqualByComparingTo("90.00");
+            verify(inscricaoRepository).salvar(resultado);
+        }
+
+        @Test
+        @DisplayName("Deve exigir forma de pagamento em evento pago")
+        void deveExigirFormaPagamentoEmEventoPago() {
+            prepararEventoPagoEParticipante();
+
+            assertThatThrownBy(() -> inscricaoService.inscrever("evento-1", "participante-1", null))
+                    .isInstanceOf(RegraNegocioException.class)
+                    .hasMessage("A forma de pagamento é obrigatória para eventos pagos.");
+
+            verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
+            verifyNoInteractions(calculadoraValor);
+        }
+
+        @Test
+        @DisplayName("Evento gratuito deve ignorar forma de pagamento informada")
+        void eventoGratuitoDeveIgnorarFormaPagamento() {
+            Evento evento = prepararEventoEParticipanteExistentes();
+            when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1"))
+                    .thenReturn(Optional.empty());
+            when(calculadoraValor.calcular(evento)).thenReturn(BigDecimal.ZERO);
+            when(inscricaoRepository.salvar(any(Inscricao.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            Inscricao resultado = inscricaoService.inscrever("evento-1", "participante-1", FormaPagamento.CARTAO);
+
+            assertThat(resultado.getFormaPagamento()).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("Confirmação e uso da carteira")
+    class Confirmacao {
+
+        @Test
         @DisplayName("Deve confirmar inscrição pendente quando há vagas")
         void deveConfirmarInscricaoPendente() {
             Evento evento = prepararEventoEParticipanteExistentes();
-            Inscricao inscricao = criarInscricao("evento-1", "participante-1");
-            when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
-                    .thenReturn(Optional.of(inscricao));
-            when(inscricaoRepository.contarConfirmadasPorEvento("evento-1")).thenReturn(0L);
-            when(inscricaoRepository.salvar(inscricao)).thenReturn(inscricao);
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "90.00");
+            prepararInscricaoParaConfirmacao(inscricao);
 
             Inscricao resultado = inscricaoService.confirmar("evento-1", "participante-1");
 
@@ -161,12 +203,79 @@ class InscricaoServiceTest {
             verify(inscricaoRepository).salvar(inscricao);
             verify(eventoService).avancarLoteSeNecessario(evento, 1L);
             verify(notificacaoService).notificarAlteracaoStatus(eq(inscricao), any(Participante.class));
+            verifyNoInteractions(carteiraService);
         }
+
+        @Test
+        @DisplayName("Deve debitar somente o saldo disponível quando ele é menor que o valor da inscrição")
+        void deveDebitarSaldoParcialDaCarteira() {
+            prepararEventoPagoEParticipante();
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "90.00");
+            Carteira carteira = new Carteira("participante-1");
+            carteira.creditar(new BigDecimal("30.00"));
+            prepararInscricaoParaConfirmacao(inscricao);
+            when(carteiraService.consultar("participante-1")).thenReturn(carteira);
+
+            Inscricao resultado = inscricaoService.confirmar("evento-1", "participante-1", true);
+
+            assertThat(resultado.getStatus()).isEqualTo(StatusInscricao.CONFIRMADA);
+            assertThat(resultado.getValorPagoCarteira()).isEqualByComparingTo("30.00");
+            verify(carteiraService).debitar("participante-1", new BigDecimal("30.00"));
+        }
+
+        @Test
+        @DisplayName("Deve debitar somente o valor da inscrição quando o saldo é maior")
+        void deveDebitarValorIntegralDaInscricao() {
+            prepararEventoPagoEParticipante();
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "90.00");
+            Carteira carteira = new Carteira("participante-1");
+            carteira.creditar(new BigDecimal("150.00"));
+            prepararInscricaoParaConfirmacao(inscricao);
+            when(carteiraService.consultar("participante-1")).thenReturn(carteira);
+
+            Inscricao resultado = inscricaoService.confirmar("evento-1", "participante-1", true);
+
+            assertThat(resultado.getValorPagoCarteira()).isEqualByComparingTo("90.00");
+            verify(carteiraService).debitar("participante-1", new BigDecimal("90.00"));
+        }
+
+        @Test
+        @DisplayName("Não deve debitar carteira quando o saldo é zero")
+        void naoDeveDebitarQuandoSaldoZero() {
+            prepararEventoPagoEParticipante();
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "90.00");
+            Carteira carteira = new Carteira("participante-1");
+            prepararInscricaoParaConfirmacao(inscricao);
+            when(carteiraService.consultar("participante-1")).thenReturn(carteira);
+
+            Inscricao resultado = inscricaoService.confirmar("evento-1", "participante-1", true);
+
+            assertThat(resultado.getValorPagoCarteira()).isEqualByComparingTo("0.00");
+            verify(carteiraService, never()).debitar(anyString(), any(BigDecimal.class));
+        }
+
+        @Test
+        @DisplayName("Não deve consultar carteira para evento gratuito")
+        void naoDeveConsultarCarteiraEmEventoGratuito() {
+            prepararEventoEParticipanteExistentes();
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "0.00");
+            prepararInscricaoParaConfirmacao(inscricao);
+
+            inscricaoService.confirmar("evento-1", "participante-1", true);
+
+            verifyNoInteractions(carteiraService);
+            assertThat(inscricao.getValorPagoCarteira()).isEqualByComparingTo("0.00");
+        }
+    }
+
+    @Nested
+    @DisplayName("Cancelamento")
+    class Cancelamento {
 
         @Test
         @DisplayName("Deve cancelar inscrição pendente aplicando a política da modalidade")
         void deveCancelarInscricaoPendente() {
-            Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "0.00");
             String motivo = "Mudança de planos";
             prepararEventoEParticipanteExistentes();
             when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
@@ -188,7 +297,7 @@ class InscricaoServiceTest {
                     "Evento exclusivo", "Descrição", inicio.toLocalDate(), inicio.toLocalTime(),
                     inicio.plusHours(1).toLocalTime(), "Centro de Eventos", 10,
                     new ModalidadeExclusivaParaAlunos(), BigDecimal.ZERO));
-            Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "0.00");
             when(eventoService.buscarPorId("evento-1")).thenReturn(evento);
             when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
             when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
@@ -210,27 +319,25 @@ class InscricaoServiceTest {
 
             assertThatThrownBy(() -> inscricaoService.cancelar("evento-1", "participante-1", null))
                     .isInstanceOf(InscricaoNaoEncontradaException.class);
-
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
         }
     }
 
     @Nested
-    @DisplayName("Testes de Validação")
+    @DisplayName("Validações")
     class Validacoes {
 
         @Test
         @DisplayName("Deve impedir inscrição em evento cancelado")
         void deveImpedirInscricaoEmEventoCancelado() {
-            Evento evento = criarEventoFuturo(100);
+            Evento evento = criarEventoGratuito(100);
             evento.cancelar();
             when(eventoService.buscarPorId("evento-1")).thenReturn(evento);
             when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
 
-            assertThatThrownBy(() -> inscricaoService.inscrever("evento-1", "participante-1"))
+            assertThatThrownBy(() -> inscricaoService.inscrever("evento-1", "participante-1", null))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("Não é possível realizar inscrição em um evento cancelado.");
-
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
         }
 
@@ -240,10 +347,9 @@ class InscricaoServiceTest {
             when(eventoService.buscarPorId("evento-1")).thenReturn(criarEventoPassado(100));
             when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
 
-            assertThatThrownBy(() -> inscricaoService.inscrever("evento-1", "participante-1"))
+            assertThatThrownBy(() -> inscricaoService.inscrever("evento-1", "participante-1", null))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("Não é possível realizar inscrição após o início do evento.");
-
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
         }
 
@@ -252,12 +358,11 @@ class InscricaoServiceTest {
         void deveImpedirInscricaoDuplicada() {
             prepararEventoEParticipanteExistentes();
             when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1"))
-                    .thenReturn(Optional.of(criarInscricao("evento-1", "participante-1")));
+                    .thenReturn(Optional.of(criarInscricao("evento-1", "participante-1", "0.00")));
 
-            assertThatThrownBy(() -> inscricaoService.inscrever("evento-1", "participante-1"))
+            assertThatThrownBy(() -> inscricaoService.inscrever("evento-1", "participante-1", null))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("O participante já possui uma inscrição ativa neste evento.");
-
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
         }
 
@@ -265,7 +370,7 @@ class InscricaoServiceTest {
         @DisplayName("Deve permitir inscrição pendente sem vaga e recusar a confirmação")
         void deveValidarVagasNaConfirmacao() {
             prepararEventoEParticipanteExistentes();
-            Inscricao pendente = criarInscricao("evento-1", "participante-1");
+            Inscricao pendente = criarInscricao("evento-1", "participante-1", "0.00");
             when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.of(pendente));
             when(inscricaoRepository.contarConfirmadasPorEvento("evento-1")).thenReturn(100L);
@@ -273,7 +378,6 @@ class InscricaoServiceTest {
             assertThatThrownBy(() -> inscricaoService.confirmar("evento-1", "participante-1"))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("Não há vagas disponíveis para confirmar a inscrição.");
-
             assertThat(pendente.getStatus()).isEqualTo(StatusInscricao.PENDENTE);
             verify(inscricaoRepository, never()).salvar(pendente);
         }
@@ -282,13 +386,13 @@ class InscricaoServiceTest {
         @DisplayName("Não permite confirmar inscrição cancelada")
         void naoPermiteConfirmarInscricaoCancelada() {
             prepararEventoEParticipanteExistentes();
-            Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "0.00");
             inscricao.cancelar("Desistência");
             when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.of(inscricao));
 
             assertThatThrownBy(() -> inscricaoService.confirmar("evento-1", "participante-1"))
-                    .isInstanceOf(br.com.sge.sistemagestaoeventos.exception.StatusInvalidoException.class);
+                    .isInstanceOf(StatusInvalidoException.class);
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
         }
 
@@ -296,52 +400,35 @@ class InscricaoServiceTest {
         @DisplayName("Não permite cancelar inscrição confirmada")
         void naoPermiteCancelarInscricaoConfirmada() {
             prepararEventoEParticipanteExistentes();
-            Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "0.00");
             inscricao.confirmar();
             when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.of(inscricao));
 
             assertThatThrownBy(() -> inscricaoService.cancelar("evento-1", "participante-1", null))
-                    .isInstanceOf(br.com.sge.sistemagestaoeventos.exception.StatusInvalidoException.class);
+                    .isInstanceOf(StatusInvalidoException.class);
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
         }
 
         @Test
         @DisplayName("Deve realizar inscrição quando participante atende à elegibilidade da modalidade")
         void deveRealizarInscricaoComElegibilidadeValida() {
-            Evento evento = new Evento(
-                    new EventoDados(
-                            "Evento Exclusivo",
-                            "Descrição do evento",
-                            LocalDate.now().plusDays(1),
-                            LocalTime.of(18, 0),
-                            LocalTime.of(20, 0),
-                            "Centro de Eventos",
-                            100,
-                            new ModalidadeExclusivaParaAlunos(),
-                            null
-                    )
-            );
-
-            Participante participante = criarParticipante();
-
+            Evento evento = new Evento(new EventoDados(
+                    "Evento Exclusivo", "Descrição do evento",
+                    LocalDate.now().plusDays(1), LocalTime.of(18, 0), LocalTime.of(20, 0),
+                    "Centro de Eventos", 100, new ModalidadeExclusivaParaAlunos(), null));
             when(eventoService.buscarPorId("evento-1")).thenReturn(evento);
-            when(participanteService.buscarPorId("participante-1")).thenReturn(participante);
-            when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante(
-                    "evento-1",
-                    "participante-1"
-            )).thenReturn(Optional.empty());
+            when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
+            when(inscricaoRepository.buscarInscricaoAtivaPorEventoEParticipante("evento-1", "participante-1"))
+                    .thenReturn(Optional.empty());
             when(inscricaoRepository.salvar(any(Inscricao.class)))
                     .thenAnswer(invocation -> invocation.getArgument(0));
             when(calculadoraValor.calcular(evento)).thenReturn(BigDecimal.ZERO);
 
-            Inscricao resultado =
-                    inscricaoService.inscrever("evento-1", "participante-1");
+            Inscricao resultado = inscricaoService.inscrever("evento-1", "participante-1", FormaPagamento.PIX);
 
-            assertThat(resultado.getEventoId()).isEqualTo("evento-1");
-            assertThat(resultado.getParticipanteId()).isEqualTo("participante-1");
             assertThat(resultado.getStatus()).isEqualTo(StatusInscricao.PENDENTE);
-
+            assertThat(resultado.getFormaPagamento()).isEqualTo(FormaPagamento.PIX);
             verify(inscricaoRepository).salvar(any(Inscricao.class));
         }
 
@@ -349,13 +436,13 @@ class InscricaoServiceTest {
         @DisplayName("Não permite confirmar inscrição já confirmada")
         void naoPermiteConfirmarInscricaoJaConfirmada() {
             prepararEventoEParticipanteExistentes();
-            Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "0.00");
             inscricao.confirmar();
             when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.of(inscricao));
 
             assertThatThrownBy(() -> inscricaoService.confirmar("evento-1", "participante-1"))
-                    .isInstanceOf(br.com.sge.sistemagestaoeventos.exception.StatusInvalidoException.class);
+                    .isInstanceOf(StatusInvalidoException.class);
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
         }
 
@@ -363,13 +450,13 @@ class InscricaoServiceTest {
         @DisplayName("Não permite cancelar inscrição já cancelada")
         void naoPermiteCancelarInscricaoJaCancelada() {
             prepararEventoEParticipanteExistentes();
-            Inscricao inscricao = criarInscricao("evento-1", "participante-1");
+            Inscricao inscricao = criarInscricao("evento-1", "participante-1", "0.00");
             inscricao.cancelar("Desistência");
             when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.of(inscricao));
 
             assertThatThrownBy(() -> inscricaoService.cancelar("evento-1", "participante-1", "Outro motivo"))
-                    .isInstanceOf(br.com.sge.sistemagestaoeventos.exception.StatusInvalidoException.class);
+                    .isInstanceOf(StatusInvalidoException.class);
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
         }
 
@@ -384,13 +471,13 @@ class InscricaoServiceTest {
                     .isInstanceOf(InscricaoNaoEncontradaException.class);
             verify(inscricaoRepository, never()).salvar(any(Inscricao.class));
         }
+
         @Test
         @DisplayName("Deve impedir confirmação de inscrição em evento cancelado")
         void deveImpedirConfirmacaoEmEventoCancelado() {
-            Evento evento = criarEventoFuturo(100);
+            Evento evento = criarEventoGratuito(100);
             evento.cancelar();
-            Inscricao pendente = criarInscricao("evento-1", "participante-1");
-
+            Inscricao pendente = criarInscricao("evento-1", "participante-1", "0.00");
             when(eventoService.buscarPorId("evento-1")).thenReturn(evento);
             when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
             when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
@@ -399,18 +486,15 @@ class InscricaoServiceTest {
             assertThatThrownBy(() -> inscricaoService.confirmar("evento-1", "participante-1"))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("Não é possível confirmar inscrição em um evento cancelado.");
-
             assertThat(pendente.getStatus()).isEqualTo(StatusInscricao.PENDENTE);
             verify(inscricaoRepository, never()).salvar(pendente);
         }
 
         @Test
-        @DisplayName("Deve impedir confirmação de inscrição após o início do evento")
+        @DisplayName("Deve impedir confirmação após o início do evento")
         void deveImpedirConfirmacaoAposInicioDoEvento() {
-            Evento eventoPassado = criarEventoPassado(100);
-            Inscricao pendente = criarInscricao("evento-1", "participante-1");
-
-            when(eventoService.buscarPorId("evento-1")).thenReturn(eventoPassado);
+            Inscricao pendente = criarInscricao("evento-1", "participante-1", "0.00");
+            when(eventoService.buscarPorId("evento-1")).thenReturn(criarEventoPassado(100));
             when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
             when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
                     .thenReturn(Optional.of(pendente));
@@ -418,56 +502,60 @@ class InscricaoServiceTest {
             assertThatThrownBy(() -> inscricaoService.confirmar("evento-1", "participante-1"))
                     .isInstanceOf(RegraNegocioException.class)
                     .hasMessage("Não é possível confirmar inscrição após o início do evento.");
-
             assertThat(pendente.getStatus()).isEqualTo(StatusInscricao.PENDENTE);
             verify(inscricaoRepository, never()).salvar(pendente);
         }
     }
 
     private Evento prepararEventoEParticipanteExistentes() {
-        Evento evento = criarEventoFuturo(100);
+        Evento evento = criarEventoGratuito(100);
         when(eventoService.buscarPorId("evento-1")).thenReturn(evento);
         when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
         return evento;
     }
 
-    private static Evento criarEventoFuturo(int capacidadeMaxima) {
-        return new Evento(
-                new EventoDados(
-                        "Evento de Teste",
-                        "Descrição do evento",
-                        LocalDate.now().plusDays(10),
-                        LocalTime.of(18, 0),
-                        LocalTime.of(20, 0),
-                        "Centro de Eventos",
-                        capacidadeMaxima,
-                        new ModalidadeAberta(),
-                        BigDecimal.ZERO
-                )
-        );
+    private Evento prepararEventoPagoEParticipante() {
+        Evento evento = criarEventoPago(100);
+        when(eventoService.buscarPorId("evento-1")).thenReturn(evento);
+        when(participanteService.buscarPorId("participante-1")).thenReturn(criarParticipante());
+        return evento;
+    }
+
+    private void prepararInscricaoParaConfirmacao(Inscricao inscricao) {
+        when(inscricaoRepository.buscarUltimaInscricaoPorEventoEParticipante("evento-1", "participante-1"))
+                .thenReturn(Optional.of(inscricao));
+        when(inscricaoRepository.contarConfirmadasPorEvento("evento-1")).thenReturn(0L);
+        when(inscricaoRepository.salvar(inscricao)).thenReturn(inscricao);
+    }
+
+    private static Evento criarEventoGratuito(int capacidadeMaxima) {
+        return new Evento(new EventoDados(
+                "Evento de Teste", "Descrição do evento",
+                LocalDate.now().plusDays(10), LocalTime.of(18, 0), LocalTime.of(20, 0),
+                "Centro de Eventos", capacidadeMaxima, new ModalidadeAberta(), BigDecimal.ZERO));
+    }
+
+    private static Evento criarEventoPago(int capacidadeMaxima) {
+        ModalidadeEvento modalidade = mock(ModalidadeEvento.class);
+        when(modalidade.isGratuita()).thenReturn(false);
+        return new Evento(new EventoDados(
+                "Evento Pago", "Descrição do evento",
+                LocalDate.now().plusDays(10), LocalTime.of(18, 0), LocalTime.of(20, 0),
+                "Centro de Eventos", capacidadeMaxima, modalidade, new BigDecimal("90.00")));
     }
 
     private static Evento criarEventoPassado(int capacidadeMaxima) {
-        return new Evento(
-                new EventoDados(
-                        "Evento de Teste",
-                        "Descrição do evento",
-                        LocalDate.now().minusDays(1),
-                        LocalTime.of(18, 0),
-                        LocalTime.of(20, 0),
-                        "Centro de Eventos",
-                        capacidadeMaxima,
-                        new ModalidadeAberta(),
-                        BigDecimal.ZERO
-                )
-        );
+        return new Evento(new EventoDados(
+                "Evento de Teste", "Descrição do evento",
+                LocalDate.now().minusDays(1), LocalTime.of(18, 0), LocalTime.of(20, 0),
+                "Centro de Eventos", capacidadeMaxima, new ModalidadeAberta(), BigDecimal.ZERO));
     }
 
     private static Participante criarParticipante() {
         return new Participante("12345", "Maria", "maria@email.com", LocalDate.of(1995, 1, 1));
     }
 
-    private static Inscricao criarInscricao(String eventoId, String participanteId) {
-        return new Inscricao(eventoId, participanteId, BigDecimal.ZERO);
+    private static Inscricao criarInscricao(String eventoId, String participanteId, String valor) {
+        return new Inscricao(eventoId, participanteId, new BigDecimal(valor));
     }
 }

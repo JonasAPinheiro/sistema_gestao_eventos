@@ -8,6 +8,7 @@ import br.com.sge.sistemagestaoeventos.service.EventoService;
 import br.com.sge.sistemagestaoeventos.service.InscricaoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import br.com.sge.sistemagestaoeventos.service.CancelamentoEventoService;
 
 import java.util.List;
 
@@ -17,13 +18,16 @@ public class EventoController {
 
     private final EventoService eventoService;
     private final InscricaoService inscricaoService;
+    private final CancelamentoEventoService cancelamentoEventoService;
 
     public EventoController(
             EventoService eventoService,
-            InscricaoService inscricaoService
+            InscricaoService inscricaoService,
+            CancelamentoEventoService cancelamentoEventoService
     ) {
         this.eventoService = eventoService;
         this.inscricaoService = inscricaoService;
+        this.cancelamentoEventoService = cancelamentoEventoService;
     }
 
     @GetMapping("/{id}")
@@ -58,7 +62,7 @@ public class EventoController {
 
     @PatchMapping("/{id}/cancelamento")
     public EventoResponseDTO cancelar(@PathVariable String id) {
-        return EventoResponseDTO.from(eventoService.cancelar(id));
+        return EventoResponseDTO.from(cancelamentoEventoService.cancelar(id));
     }
 
     @GetMapping("/{id}/vagas")

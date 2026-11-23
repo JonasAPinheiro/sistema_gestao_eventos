@@ -26,6 +26,7 @@ public class InscricaoRepositoryMemoria implements InscricaoRepository {
                 .filter(inscricao -> inscricao.getEventoId().equals(eventoId))
                 .filter(inscricao -> inscricao.getParticipanteId().equals(participanteId))
                 .filter(inscricao -> inscricao.getStatus() != StatusInscricao.CANCELADA)
+                .filter(inscricao -> !inscricao.isReembolsada())
                 .findFirst();
     }
 
@@ -56,6 +57,7 @@ public class InscricaoRepositoryMemoria implements InscricaoRepository {
         return inscricoesPorId.values().stream()
                 .filter(inscricao -> inscricao.getEventoId().equals(eventoId))
                 .filter(inscricao -> inscricao.getStatus() == StatusInscricao.CONFIRMADA)
+                .filter(inscricao -> !inscricao.isReembolsada())
                 .count();
     }
 }
