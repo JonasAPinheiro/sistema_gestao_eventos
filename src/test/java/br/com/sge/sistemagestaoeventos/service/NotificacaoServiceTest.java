@@ -3,9 +3,12 @@ package br.com.sge.sistemagestaoeventos.service;
 import br.com.sge.sistemagestaoeventos.enums.CanalNotificacao;
 import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
 import br.com.sge.sistemagestaoeventos.enums.StatusNotificacao;
+import br.com.sge.sistemagestaoeventos.enums.DestinoReembolso;
+import br.com.sge.sistemagestaoeventos.enums.MotivoReembolso;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 import br.com.sge.sistemagestaoeventos.model.Participante;
 import br.com.sge.sistemagestaoeventos.model.notificacao.Notificacao;
+import br.com.sge.sistemagestaoeventos.model.reembolso.Reembolso;
 import br.com.sge.sistemagestaoeventos.notificacao.Notificador;
 import br.com.sge.sistemagestaoeventos.repository.NotificacaoRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,6 +85,28 @@ class NotificacaoServiceTest {
                     assertThat(notificacao.erro()).isEqualTo("Gateway indisponível");
                 });
         assertThat(inscricao.getStatus()).isEqualTo(StatusInscricao.CONFIRMADA);
+    }
+
+    @Test
+    void deveNotificarReembolsoEmTodosOsCanaisERegistrarEnvios() {
+        Inscricao inscricao = inscricaoConfirmada();
+        Participante participante = participante();
+        Reembolso reembolso = Reembolso.criar(inscricao.getId(), participante.getId(), new BigDecimal("80.00"),
+                DestinoReembolso.CARTEIRA, MotivoReembolso.SOLICITADO_PARTICIPANTE);
+        prepararCanais();
+
+        notificacaoService.notificarReembolso(inscricao, participante, reembolso);
+
+        verify(email).notificarReembolso(inscricao, participante, reembolso);
+        verify(sms).notificarReembolso(inscricao, participante, reembolso);
+        ArgumentCaptor<Notificacao> captor = ArgumentCaptor.forClass(Notificacao.class);
+        verify(notificacaoRepository, times(2)).salvar(captor.capture());
+        assertThat(captor.getAllValues())
+                .extracting(Notificacao::status)
+                .containsOnly(StatusNotificacao.ENVIADA);
+        assertThat(captor.getAllValues())
+                .extracting(Notificacao::mensagem)
+                .allMatch(mensagem -> mensagem.contains("80.00") && mensagem.contains("CARTEIRA"));
     }
 
     @Test
