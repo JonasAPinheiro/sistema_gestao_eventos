@@ -3,6 +3,7 @@ package br.com.sge.sistemagestaoeventos.model;
 import br.com.sge.sistemagestaoeventos.enums.StatusEvento;
 import br.com.sge.sistemagestaoeventos.enums.TipoLote;
 import br.com.sge.sistemagestaoeventos.model.modalidade.ModalidadeEvento;
+import br.com.sge.sistemagestaoeventos.exception.StatusInvalidoException;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -55,6 +56,9 @@ public class Evento {
     }
 
     public void cancelar() {
+        if (this.status == StatusEvento.CANCELADO) {
+            throw new StatusInvalidoException("O evento já está cancelado.");
+        }
         this.status = StatusEvento.CANCELADO;
     }
 

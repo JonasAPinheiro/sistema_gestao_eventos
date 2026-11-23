@@ -1,10 +1,11 @@
 package br.com.sge.sistemagestaoeventos.dto;
 
+import br.com.sge.sistemagestaoeventos.enums.FormaPagamento;
 import br.com.sge.sistemagestaoeventos.enums.StatusInscricao;
 import br.com.sge.sistemagestaoeventos.model.Inscricao;
 
-import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public record InscricaoResponseDTO(
         String id,
@@ -14,7 +15,10 @@ public record InscricaoResponseDTO(
         String motivoCancelamento,
         LocalDateTime criadoEm,
         BigDecimal valorFinal,
-        ComprovanteResponseDTO comprovante
+        ComprovanteResponseDTO comprovante,
+        FormaPagamento formaPagamento,
+        BigDecimal valorPagoCarteira,
+        boolean reembolsada
 ) {
 
     public static InscricaoResponseDTO from(
@@ -28,7 +32,10 @@ public record InscricaoResponseDTO(
                 inscricao.getMotivoCancelamento(),
                 inscricao.getCriadoEm(),
                 inscricao.getValorFinal(),
-                ComprovanteResponseDTO.from(inscricao.getComprovante())
+                ComprovanteResponseDTO.from(inscricao.getComprovante()),
+                inscricao.getFormaPagamento(),
+                inscricao.getValorPagoCarteira(),
+                inscricao.isReembolsada()
         );
     }
 }
